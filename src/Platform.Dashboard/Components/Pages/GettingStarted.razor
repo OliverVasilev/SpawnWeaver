@@ -1,0 +1,82 @@
+@page "/dashboard/getting-started"
+@inject DashboardUser User
+
+<div class="page-head">
+    <h2>Getting started</h2>
+    <span class="badge badge-dim">@(User.IsAuthenticated ? "help & tutorials" : "welcome")</span>
+</div>
+
+@if (!User.IsAuthenticated)
+{
+    <div class="card welcome-card">
+        <div class="section-title" style="margin-top:0">Add online multiplayer to your Godot game</div>
+        <p>
+            SpawnWeaver gives you rooms, lobbies, matchmaking, and realtime events with a
+            Godot-native SDK — no backend to build. Create a free account to make your first
+            project and get your keys.
+        </p>
+        <div class="cta-row">
+            <a class="btn btn-primary" href="/dashboard/signup">Create a free account</a>
+            <a class="btn btn-secondary" href="/dashboard/signin">Sign in</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card welcome-card">
+        <div class="section-title" style="margin-top:0">Welcome, @User.DisplayName 👋</div>
+        <p>You're signed in. Create a project to get your keys, then run an example to see two players connect.</p>
+        <div class="cta-row">
+            <a class="btn btn-primary" href="/dashboard/onboarding">Create a project →</a>
+            <a class="btn btn-secondary" href="/dashboard/projects">Your projects</a>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="section-title" style="margin-top:0">Build your first multiplayer game</div>
+    <ol class="steps">
+        <li><strong>Create an account.</strong> It's free — you'll get a personal workspace.</li>
+        <li><strong>Create a project.</strong> Name it to get a <em>public key</em> (safe to ship)
+            and a <em>secret key</em> (shown once). Manage keys later from the project page.</li>
+        <li><strong>Install the Godot SDK.</strong> Run the one-line installer in your Godot project
+            (or copy <code>addons/multiplayer_service</code>), then enable the plugin — it adds a
+            <code>MultiplayerService</code> autoload.</li>
+        <li><strong>Connect &amp; play.</strong> Paste your public key, run an example, and open a second
+            instance to see two players together.</li>
+    </ol>
+</div>
+
+<div class="card">
+    <div class="section-title" style="margin-top:0">Short tutorials</div>
+    <div class="tut-grid">
+        <div class="tut">
+            <div class="tut-title">⚡ Multiplayer in 10 minutes</div>
+            <p class="muted">Connect, authenticate a guest player, join a room, and send your first event.</p>
+            <div class="tut-foot">Example: <strong>Realtime Chat Room</strong></div>
+        </div>
+        <div class="tut">
+            <div class="tut-title">🛋️ Build a lobby with ready checks</div>
+            <p class="muted">Create a lobby, list players, toggle ready, and let the host start the game.</p>
+            <div class="tut-foot">Example: <strong>Lobby + Ready Check</strong></div>
+        </div>
+        <div class="tut">
+            <div class="tut-title">⚔️ Add matchmaking</div>
+            <p class="muted">Queue two players, get matched into a room, and exchange movement in real time.</p>
+            <div class="tut-foot">Example: <strong>1v1 Matchmaking Arena</strong></div>
+        </div>
+    </div>
+    <p class="muted" style="margin-bottom:0">
+        Each example ships with the Godot SDK in <code>sdk/godot-gdscript/examples/</code>, with its own
+        README and step-by-step instructions.
+    </p>
+</div>
+
+<div class="card">
+    <div class="section-title" style="margin-top:0">Full documentation</div>
+    <p class="muted" style="margin-top:0">
+        Quickstart, core concepts, six tutorials, the SDK reference, error codes, and limits —
+        all browsable here.
+    </p>
+    <a class="btn btn-primary" href="/dashboard/docs">Open the docs →</a>
+</div>

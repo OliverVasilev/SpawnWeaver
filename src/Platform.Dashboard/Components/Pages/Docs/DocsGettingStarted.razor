@@ -1,0 +1,120 @@
+@page "/dashboard/docs/getting-started"
+
+<div class="page-head"><h2>Quickstart</h2></div>
+
+<DocsPage Slug="getting-started">
+    <h1>Quickstart: two players online</h1>
+    <p class="lead">
+        From a fresh account to two players moving together in your Godot game — about 10 minutes,
+        copy-paste friendly. This assumes your SpawnWeaver backend is already running at a domain.
+    </p>
+
+    <div class="banner banner-warn" style="margin-top:14px">
+        <span>🌐</span>
+        <span>
+            Examples below use <code>spawnweaver.example</code> as a placeholder — swap in
+            <strong>your</strong> domain. Don't have a server yet?
+            <a href="/dashboard/docs/hosting">Host it on Hetzner in ~15 minutes →</a>
+            Running it on your own machine instead? Use <code>http://localhost:5159</code> and
+            <code>ws://127.0.0.1:5159/connect</code>.
+        </span>
+    </div>
+
+    <h2>1. Create your account</h2>
+    <p>
+        <a href="/dashboard/signup">Sign up</a> for a free account — you get a personal workspace
+        that owns your projects.
+    </p>
+    <p>
+        <strong>Check your email and click the confirmation link.</strong> On a hosted server you
+        must verify your email before you can sign in. (No email arriving? Open
+        <a href="/dashboard/verify-pending">verify-pending</a> to resend it.)
+    </p>
+
+    <h2>2. Create a project</h2>
+    <p>
+        Open <a href="/dashboard/onboarding">Create a project</a>. The guided setup asks a couple of
+        questions about your game and hands you two keys:
+    </p>
+    <ul>
+        <li><strong>Public key</strong> (<code>pk_…</code>) — safe to ship inside your game client. This is what connects players.</li>
+        <li><strong>Secret key</strong> (<code>sk_…</code>) — server-side only and <strong>shown once</strong>. Used for player data. Keep it out of your game.</li>
+    </ul>
+
+    <h2>3. Install the Godot SDK (one line)</h2>
+    <p>
+        From the <strong>root of your Godot project</strong>, run the installer your server hosts. It
+        downloads just the addon into <code>res://addons/multiplayer_service</code> — no repo clone:
+    </p>
+    <pre># Windows (PowerShell)
+iwr https://spawnweaver.example/install.ps1 -UseBasicParsing | iex
+
+# macOS / Linux
+curl -fsSL https://spawnweaver.example/install.sh | bash</pre>
+    <p>
+        Then open your project in Godot and enable <strong>SpawnWeaver Multiplayer Service</strong> in
+        <em>Project → Project Settings → Plugins</em>. That registers the <code>MultiplayerService</code>
+        autoload and adds the SpawnWeaver editor dock.
+    </p>
+    <p class="muted">
+        Prefer manual install? Copy the <code>addons/multiplayer_service</code> folder into your
+        project's <code>addons/</code> and enable the plugin.
+    </p>
+
+    <h2>4. Point the SDK at your server</h2>
+    <p>
+        Open the <strong>SpawnWeaver dock</strong> (right-hand panel in the editor). Paste your public
+        key and the secure WebSocket URL, then click <strong>Save</strong>:
+    </p>
+    <ul>
+        <li><strong>Public key:</strong> <code>pk_…</code> (from step 2)</li>
+        <li><strong>Server URL:</strong> <code>wss://spawnweaver.example/connect</code> (note <code>wss://</code> — secure — for a hosted domain)</li>
+    </ul>
+    <p>
+        Now your scenes can connect with no hard-coded keys using
+        <code>MultiplayerService.connect_using_config()</code>.
+    </p>
+
+    <h2>5. Connect and send your first event</h2>
+    <p>Guest sign-in is automatic — connecting mints a stable player identity. Add this to a script:</p>
+    <pre>func _ready() -> void:
+    MultiplayerService.connected.connect(func():
+        print("connected as ", MultiplayerService.player_id)
+        MultiplayerService.create_room("Alice"))      # host makes a room
+
+    MultiplayerService.room_created.connect(func(id, code, players):
+        print("Share this room code: ", code))        # the other player joins with it
+
+    MultiplayerService.event_received.connect(func(event, data, from_id):
+        print(event, " -> ", data))                   # incoming events from others
+
+    MultiplayerService.connect_using_config()          # uses the dock's key + URL
+
+# Call this from gameplay to broadcast to everyone in the room:
+func move_to(x: int, y: int) -> void:
+    MultiplayerService.send_event("player_moved", { "x": x, "y": y })</pre>
+    <p>
+        The other player joins the shared code with
+        <code>MultiplayerService.join_room("ABC123", "Bob")</code>. The relay delivers each
+        <code>send_event</code> to everyone else in the room (not the sender), so draw your own moves
+        locally and react to <code>event_received</code> for the others.
+    </p>
+
+    <h2>6. See two players</h2>
+    <p>
+        In Godot, choose <em>Debug → Run Multiple Instances</em> and set <strong>2</strong>, then run
+        your scene. One window hosts (prints a code), the other joins by that code. Watch the live
+        connections on the <a href="/dashboard/debugger">Debugger</a>.
+    </p>
+
+    <div class="banner" style="border-color:var(--border); color:var(--steel)">
+        <span>✅</span>
+        <span>That's it — you're online. Next, turn the room into a real lobby with a ready check, or
+            add matchmaking so players are paired automatically.</span>
+    </div>
+
+    <div class="docs-next">
+        <a href="/dashboard/docs/hosting">← Host on Hetzner</a>
+        <a href="/dashboard/docs/concepts">Core concepts →</a>
+    </div>
+</DocsPage>

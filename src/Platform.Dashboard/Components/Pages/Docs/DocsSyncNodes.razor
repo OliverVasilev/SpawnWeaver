@@ -1,0 +1,118 @@
+@page "/dashboard/docs/sync-nodes"
+
+<div class="page-head"><h2>Drop-in sync nodes</h2></div>
+
+<DocsPage Slug="sync-nodes">
+    <h1>Drop-in sync nodes &amp; interpolation</h1>
+    <p class="lead">
+        Replicate a node's movement across the network without writing any send/receive code. Add a
+        <code>SpawnSync</code> node as a child, tick one box on the copy you control, and remote
+        players move smoothly thanks to built-in interpolation.
+    </p>
+
+    <p style="margin:10px 0">
+        <span class="badge badge-cyan">Zero boilerplate</span>
+        <span class="badge badge-cyan">Node2D &amp; Node3D</span>
+        <span class="badge badge-green">Smooth interpolation</span>
+        <span class="badge badge-cyan">Auto register &amp; despawn</span>
+    </p>
+
+    <h2>What it does</h2>
+    <p><code>SpawnSync</code> wraps SpawnWeaver's entity-state sync in a node so you don't call
+        <code>set_entity_state</code>/<code>patch_entity_state</code> yourself:</p>
+    <ul>
+        <li>On the copy <strong>you</strong> control (<code>local = true</code>) it registers an
+            entity and sends the parent's position/rotation (and any custom properties) several
+            times a second.</li>
+        <li>On copies of <strong>other</strong> players (<code>local = false</code>) it listens for
+            that entity's updates and <strong>interpolates</strong> the parent toward them, so motion
+            looks smooth even though packets arrive a few times per second.</li>
+        <li>It registers on connect and <strong>deletes itself</strong> when the node leaves the
+            tree — and remote copies free themselves when the entity is removed.</li>
+    </ul>
+
+    <h2>1. Add it to your player scene</h2>
+    <p>Build a normal player scene (a <code>CharacterBody2D</code>, <code>Node2D</code>,
+        <code>Node3D</code>, …). Add a child node, search for <strong>SpawnSync</strong>, and name it
+        <code>SpawnSync</code>. In the inspector pick what to replicate:</p>
+    <ul>
+        <li><strong>Sync position / rotation / scale</strong> — toggles for the parent's transform.</li>
+        <li><strong>Synced properties</strong> — names of extra parent variables to replicate
+            (e.g. <code>hp</code>, <code>team</code>). Primitives only — for a <code>Color</code>,
+            sync its components.</li>
+        <li><strong>Send rate</strong> — updates per second a local node sends (default 20).</li>
+        <li><strong>Interpolate</strong> + <strong>Interpolation speed</strong> — higher is snappier,
+            lower is smoother. Frame-rate independent.</li>
+    </ul>
+
+    <h2>2. Mark the copy you control</h2>
+    <p>The instance this client drives sets <code>local = true</code>. With an empty
+        <code>entity_id</code>, a local node uses your own player id — perfect for one avatar per
+        player. (Objects you spawn need a unique <code>entity_id</code> you choose.)</p>
+    <pre># On your own avatar, before adding it to the tree:
+var me := PlayerScene.instantiate()
+me.get_node("SpawnSync").local = true     # this client sends; entity_id defaults to player_id
+add_child(me)</pre>
+
+    <h2>3. Spawn copies of other players</h2>
+    <p><code>SpawnSync</code> handles sending and interpolation, but you decide when to create the
+        remote scenes. A tiny manager watches for entity ids and spawns one player scene each:</p>
+    <pre>extends Node2D
+const PlayerScene := preload("res://player.tscn")
+var _remotes := {}        # entity_id -> node
+
+func _ready() -> void:
+    MultiplayerService.match_found.connect(func(_r, _c, _p): _spawn_local())
+    MultiplayerService.state_snapshot_received.connect(_on_snapshot)
+    MultiplayerService.entity_state_changed.connect(func(id, _patch, _full): _ensure_remote(id))
+    MultiplayerService.entity_state_deleted.connect(func(id): _remotes.erase(id))
+    MultiplayerService.connect_using_config()
+
+func _spawn_local() -> void:
+    var me := PlayerScene.instantiate()
+    me.get_node("SpawnSync").local = true     # registers + sends automatically
+    add_child(me)
+
+func _ensure_remote(id: String) -> void:
+    if id == MultiplayerService.player_id or _remotes.has(id):
+        return
+    var p := PlayerScene.instantiate()
+    var sync := p.get_node("SpawnSync")
+    sync.entity_id = id                        # set before it enters the tree
+    add_child(p)                               # now it interpolates this entity
+    _remotes[id] = p
+
+func _on_snapshot(snapshot: Dictionary) -> void:
+    for e in snapshot.get("entities", []):     # late join: everyone already present
+        _ensure_remote(str(e.get("entityId", "")))</pre>
+    <p>That's the whole networking layer. Move your local avatar however you like (input, physics);
+        its <code>SpawnSync</code> streams the transform out, and every remote copy eases into place.
+        When a player leaves, their entity is deleted and the remote scene frees itself.</p>
+
+    <h2>Custom properties</h2>
+    <p>List extra variables in <strong>Synced properties</strong> and they ride along with the
+        transform. They're applied immediately on remote copies (not interpolated), which is what you
+        want for things like health or team:</p>
+    <pre># SpawnSync "Synced properties" = ["hp", "team"]
+# Your player script just sets them locally; SpawnSync replicates them:
+hp -= 25
+# remote copies receive the new hp on the next update</pre>
+
+    <h2>How interpolation works</h2>
+    <p>Updates arrive ~20×/second, but you render at 60+ fps. Instead of snapping on each packet, a
+        remote <code>SpawnSync</code> eases the parent toward the latest received transform every
+        frame (frame-rate-independent smoothing). Turn it off with <code>interpolate = false</code>
+        for instant snapping, or raise <code>interpolation_speed</code> for a tighter follow.</p>
+
+    <h2>When to use the lower-level API instead</h2>
+    <p><code>SpawnSync</code> is ideal for transforms and simple shared variables. For one-off,
+        non-positional messages (a chat line, "I fired", a score event) use
+        <a href="/dashboard/docs/tutorial-online"><code>send_event</code></a>; for authoritative
+        shared values use <a href="/dashboard/docs/tutorial-state-sync">room/entity state directly</a>.
+        The shooters combine both: <code>SpawnSync</code> for movement, events for shots.</p>
+
+    <div class="docs-next">
+        <a href="/dashboard/docs/tutorial-2d-shooter">← 2D shooter</a>
+        <a href="/dashboard/docs/tutorial-state-sync">State sync internals →</a>
+    </div>
+</DocsPage>

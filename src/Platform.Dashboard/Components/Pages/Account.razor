@@ -1,0 +1,110 @@
+@page "/dashboard/account"
+@using Platform.Application.Accounts
+@using Platform.Domain.Accounts
+@inject DashboardUser User
+@inject AccountService Accounts
+@inject SessionService Sessions
+
+<div class="page-head">
+    <h2>Account</h2>
+</div>
+
+@if (!User.IsAuthenticated || _user is null)
+{
+    <div class="card">
+        <div class="empty">
+            You're not signed in. <a href="/dashboard/signin">Sign in</a> or
+            <a href="/dashboard/signup">create an account</a>.
+        </div>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="section-title">Profile</div>
+        <div class="kv">
+            <div class="kv-label">Email</div><div class="mono">@_user.Email</div>
+            <div class="kv-label">Workspace</div><div>@(_org?.Name ?? "—")</div>
+            <div class="kv-label">Member since</div><div class="muted">@_user.CreatedAtUtc.ToString("u")</div>
+            <div class="kv-label">Last login</div><div class="muted">@(_user.LastLoginAtUtc?.ToString("u") ?? "—")</div>
+        </div>
+
+        <label class="field-label" for="ac-name">Display name</label>
+        <div class="create-row">
+            <input id="ac-name" class="field" type="text" value="@_user.DisplayName" autocomplete="name" />
+            <button class="btn btn-primary" type="button" onclick="swSaveDisplayName()">Save</button>
+            <span id="ac-name-status"></span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Change password</div>
+        <label class="field-label" for="ac-cur">Current password</label>
+        <input id="ac-cur" class="field" type="password" autocomplete="current-password" />
+        <label class="field-label" for="ac-new">New password</label>
+        <input id="ac-new" class="field" type="password" placeholder="At least 8 characters" autocomplete="new-password" />
+        <div style="margin-top:12px">
+            <button class="btn btn-primary" type="button" onclick="swChangePassword()">Update password</button>
+            <span id="ac-pw-status"></span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Active sessions (@_sessions.Count)</div>
+        <table>
+            <thead>
+                <tr><th>Session</th><th>Started (UTC)</th><th>Last seen (UTC)</th><th>Expires (UTC)</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var s in _sessions)
+                {
+                    <tr>
+                        <td class="mono">
+                            @s.Id
+                            @if (string.Equals(s.Id, _currentSessionId, StringComparison.Ordinal))
+                            {
+                                <span class="badge badge-green">this device</span>
+                            }
+                        </td>
+                        <td class="muted">@s.CreatedAtUtc.ToString("u")</td>
+                        <td class="muted">@s.LastSeenAtUtc.ToString("u")</td>
+                        <td class="muted">@s.ExpiresAtUtc.ToString("u")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div style="margin-top:12px">
+            <button class="btn btn-ghost" type="button" onclick="swRevokeAllSessions()">Sign out all other devices</button>
+            <span id="ac-sessions-status"></span>
+        </div>
+    </div>
+}
+
+@code {
+    private AccountView? _user;
+    private Organization? _org;
+    private IReadOnlyList<UserSession> _sessions = [];
+    private string? _currentSessionId;
+
+    private sealed record AccountView(string Email, string DisplayName, DateTimeOffset CreatedAtUtc, DateTimeOffset? LastLoginAtUtc);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userId = User.UserId;
+        if (!User.IsAuthenticated || userId is null)
+        {
+            return;
+        }
+
+        var user = await Accounts.GetByIdAsync(userId);
+        if (user is null)
+        {
+            return;
+        }
+
+        _user = new AccountView(user.Email, user.DisplayName, user.CreatedAtUtc, user.LastLoginAtUtc);
+        _org = await User.GetOrganizationAsync();
+        _sessions = await Sessions.ListForUserAsync(userId);
+        _currentSessionId = User.SessionId;
+    }
+}

@@ -1,0 +1,82 @@
+@page "/dashboard/docs/sdk-reference"
+
+<div class="page-head"><h2>SDK reference</h2></div>
+
+<DocsPage Slug="sdk-reference">
+    <h1>SDK reference</h1>
+    <p class="lead">The Godot GDScript SDK (<code>MultiplayerService</code> autoload), v0.3.0.</p>
+
+    <h2>Installation &amp; configuration</h2>
+    <ul>
+        <li>Copy <code>addons/multiplayer_service</code> into your project and enable the plugin.</li>
+        <li><code>configure(public_key)</code> then <code>connect_to_server(url)</code>, or
+            <code>connect_using_config()</code> to use the editor-saved credentials.</li>
+        <li>Guest auth is automatic; <code>player_id</code> is stable across reconnects.</li>
+    </ul>
+
+    <h2>Key methods</h2>
+    <table>
+        <thead><tr><th>Area</th><th>Methods</th></tr></thead>
+        <tbody>
+            <tr><td>Connection</td><td><code>configure</code>, <code>connect_to_server</code>, <code>connect_using_config</code>, <code>disconnect_from_server</code></td></tr>
+            <tr><td>Rooms</td><td><code>create_room</code>, <code>join_room</code>, <code>leave_room</code>, <code>list_players</code></td></tr>
+            <tr><td>Lobbies</td><td><code>create_lobby</code>, <code>list_lobbies</code>, <code>join_lobby</code>, <code>join_lobby_by_id</code></td></tr>
+            <tr><td>Matchmaking</td><td><code>join_matchmaking</code>, <code>leave_matchmaking</code></td></tr>
+            <tr><td>Events</td><td><code>send_event</code></td></tr>
+            <tr><td>State sync</td><td><code>patch_room_state</code>, <code>set_entity_state</code>, <code>patch_entity_state</code>, <code>delete_entity_state</code></td></tr>
+            <tr><td>Debug</td><td><code>set_debug_enabled</code>, <code>get_ping_ms</code>, <code>create_debug_report</code>, <code>create_debug_report_string</code></td></tr>
+        </tbody>
+    </table>
+
+    <h2>Signals</h2>
+    <p>Connect to signals for every important event:</p>
+    <ul>
+        <li><strong>Connection</strong> — <code>connected</code>, <code>disconnected</code>,
+            <code>welcomed</code>, <code>authenticated</code>, <code>reconnecting</code>,
+            <code>reconnected</code>, <code>reconnect_failed</code>, <code>connection_error</code>.</li>
+        <li><strong>Rooms</strong> — <code>room_created</code>, <code>room_joined</code>,
+            <code>player_joined</code>, <code>player_left</code>, <code>room_players</code>, <code>room_expired</code>.</li>
+        <li><strong>Lobbies</strong> — <code>lobby_created</code>, <code>lobby_list</code>,
+            <code>lobby_joined</code>, <code>lobby_closed</code>.</li>
+        <li><strong>Matchmaking</strong> — <code>matchmaking_queued</code>, <code>match_found</code>,
+            <code>matchmaking_left</code>, <code>matchmaking_timeout</code>.</li>
+        <li><strong>Events</strong> — <code>event_received</code>.</li>
+        <li><strong>State sync</strong> — <code>state_snapshot_received</code>, <code>room_state_changed</code>,
+            <code>entity_state_changed</code>, <code>entity_state_deleted</code>, <code>state_update_rejected</code>.</li>
+        <li><strong>Errors</strong> — <code>sdk_error</code> (structured), <code>error_received</code>.</li>
+    </ul>
+
+    <h2>Error codes</h2>
+    <table>
+        <thead><tr><th>Code</th><th>Retryable</th><th>Meaning</th></tr></thead>
+        <tbody>
+            <tr><td><code>malformed_message</code></td><td>no</td><td>The message wasn't a valid envelope.</td></tr>
+            <tr><td><code>unknown_message_type</code></td><td>no</td><td>Unrecognized message type.</td></tr>
+            <tr><td><code>invalid_payload</code></td><td>no</td><td>A required field is missing/invalid.</td></tr>
+            <tr><td><code>room_not_found</code></td><td>no</td><td>No such room/lobby, or it expired.</td></tr>
+            <tr><td><code>room_full</code></td><td>no</td><td>The room/lobby hit its max players.</td></tr>
+            <tr><td><code>payload_too_large</code></td><td>no</td><td>Message over the 16&nbsp;KB limit.</td></tr>
+            <tr><td><code>rate_limited</code></td><td><strong>yes</strong></td><td>Sending too fast; back off.</td></tr>
+            <tr><td><code>state_forbidden</code></td><td>no</td><td>Not the entity owner / not the room host.</td></tr>
+            <tr><td><code>entity_not_found</code></td><td>no</td><td>Patch/delete on a missing entity.</td></tr>
+            <tr><td><code>state_limit_exceeded</code></td><td>no</td><td>Room hit its entity cap.</td></tr>
+            <tr><td><code>state_too_large</code></td><td>no</td><td>State over the size cap.</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Reconnection</h2>
+    <p>After an unexpected drop the SDK reconnects automatically with backoff, reusing the token to
+        resume the same <code>player_id</code>. A heartbeat timeout (default 45s) recovers half-open
+        links. Set <code>rejoin_last_room_on_reconnect = true</code> to re-join the last room by code.
+        <code>disconnect_from_server()</code> is treated as intentional and does not reconnect.</p>
+
+    <h2>Debug reports</h2>
+    <p><code>create_debug_report()</code> returns a snapshot (SDK + Godot versions, connection/player
+        state, last errors, last 50 messages, ping). <code>create_debug_report_string()</code> gives
+        copyable JSON for the dashboard's <a href="/dashboard/debug">debug bundle viewer</a>.</p>
+
+    <div class="docs-next">
+        <a href="/dashboard/docs/tutorial-debug">← Debugging</a>
+        <a href="/dashboard/docs/limits">Limits &amp; pricing →</a>
+    </div>
+</DocsPage>

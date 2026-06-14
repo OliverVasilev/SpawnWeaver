@@ -1,0 +1,41 @@
+@namespace Platform.Dashboard.Components.Docs
+
+<div class="docs-shell">
+    <aside class="docs-nav">
+        <div class="docs-group">Getting started</div>
+        <a href="/dashboard/docs" class="@A("index")">Overview</a>
+        <a href="/dashboard/docs/getting-started" class="@A("getting-started")">Quickstart</a>
+        <a href="/dashboard/docs/concepts" class="@A("concepts")">Core concepts</a>
+
+        <div class="docs-group">Deploy</div>
+        <a href="/dashboard/docs/hosting" class="@A("hosting")">Host on Hetzner</a>
+
+        <div class="docs-group">Tutorials</div>
+        <a href="/dashboard/docs/tutorial-2d-shooter" class="@A("tutorial-2d-shooter")">2D shooter</a>
+        <a href="/dashboard/docs/tutorial-3d-shooter" class="@A("tutorial-3d-shooter")">3D shooter</a>
+
+        <div class="docs-group">Feature guides</div>
+        <a href="/dashboard/docs/sync-nodes" class="@A("sync-nodes")">Drop-in sync nodes</a>
+        <a href="/dashboard/docs/tutorial-online" class="@A("tutorial-online")">Online in 10 minutes</a>
+        <a href="/dashboard/docs/tutorial-lobby" class="@A("tutorial-lobby")">Lobby + ready check</a>
+        <a href="/dashboard/docs/tutorial-matchmaking" class="@A("tutorial-matchmaking")">Add matchmaking</a>
+        <a href="/dashboard/docs/tutorial-state-sync" class="@A("tutorial-state-sync")">Simple state sync</a>
+        <a href="/dashboard/docs/tutorial-profile" class="@A("tutorial-profile")">Save a player profile</a>
+        <a href="/dashboard/docs/tutorial-debug" class="@A("tutorial-debug")">Debug a connection</a>
+
+        <div class="docs-group">Reference</div>
+        <a href="/dashboard/docs/sdk-reference" class="@A("sdk-reference")">SDK reference</a>
+        <a href="/dashboard/docs/limits" class="@A("limits")">Limits &amp; pricing</a>
+        <a href="/dashboard/docs/decision-guides" class="@A("decision-guides")">Choosing a model</a>
+    </aside>
+    <article class="docs-content">
+        @ChildContent
+    </article>
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string A(string slug) => string.Equals(Slug, slug, StringComparison.Ordinal) ? "active" : "";
+}

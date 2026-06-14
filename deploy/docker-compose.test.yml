@@ -1,0 +1,33 @@
+# SpawnWeaver — near-free playtest profile (Mode B).
+# A single .NET container with a persisted SQLite database. Cheapest way to let real
+# test players connect. See docs/infrastructure.md for the full playtest guide.
+#
+#   docker compose -f deploy/docker-compose.test.yml up --build -d
+#   curl http://localhost:8080/health
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: src/Platform.Api/Dockerfile
+    image: spawnweaver/platform-api:test
+    container_name: spawnweaver-api
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      # SQLite database persisted to the mounted volume.
+      Database__Provider: sqlite
+      ConnectionStrings__Default: "Data Source=/app/data/spawnweaver.db"
+      # Realtime tuning (optional; defaults shown).
+      Realtime__MaxMessageBytes: "16384"
+      Realtime__MaxMessagesPerSecond: "20"
+      Realtime__MessageBurst: "40"
+      Realtime__EmptyRoomTtl: "00:01:00"
+    volumes:
+      - spawnweaver-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  spawnweaver-data:

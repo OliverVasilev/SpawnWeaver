@@ -1,0 +1,49 @@
+@page "/dashboard/docs/tutorial-online"
+
+<div class="page-head"><h2>Tutorial</h2></div>
+
+<DocsPage Slug="tutorial-online">
+    <h1>Online in 10 minutes — a chat room</h1>
+    <p class="lead">Connect two players and send messages between them.</p>
+
+    <h2>Goal</h2>
+    <p>Create a room, join it from a second client, and exchange chat messages via the event relay.</p>
+
+    <h2>1. Wire up the signals</h2>
+    <pre>func _ready() -> void:
+    MultiplayerService.welcomed.connect(func(_id): print("connected"))
+    MultiplayerService.room_created.connect(func(_id, code, _p): print("share this code: ", code))
+    MultiplayerService.room_joined.connect(func(_id, _c, _player, players): print("players: ", players.size()))
+    MultiplayerService.event_received.connect(_on_event)
+    MultiplayerService.configure("pk_your_public_key")
+    MultiplayerService.connect_to_server("ws://127.0.0.1:5000/connect")</pre>
+
+    <h2>2. Create or join a room</h2>
+    <pre># Client A:
+MultiplayerService.create_room("Alice")
+
+# Client B (with the code A shared):
+MultiplayerService.join_room("ABC123", "Bob")</pre>
+
+    <h2>3. Send and receive chat</h2>
+    <p><code>send_event</code> defaults to the room you're in, so you don't pass a room id.</p>
+    <pre>func send_chat(text: String) -> void:
+    MultiplayerService.send_event("chat", { "name": "Alice", "text": text })
+
+func _on_event(event: String, data: Dictionary, _from: String) -> void:
+    if event == "chat":
+        print(data.name, ": ", data.text)</pre>
+    <p>The relay excludes the sender, so echo your own line locally.</p>
+
+    <h2>4. Run two players</h2>
+    <p>In Godot: <em>Debug → Run Multiple Instances</em> (2), run your scene, create a room in one
+        window and join by code in the other.</p>
+
+    <p>Full version: the <strong>Realtime Chat Room</strong> example in
+        <code>sdk/godot-gdscript/examples/chat_room/</code>.</p>
+
+    <div class="docs-next">
+        <a href="/dashboard/docs/concepts">← Concepts</a>
+        <a href="/dashboard/docs/tutorial-lobby">Lobby + ready check →</a>
+    </div>
+</DocsPage>

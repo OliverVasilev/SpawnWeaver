@@ -1,0 +1,37 @@
+@page "/dashboard/docs/tutorial-matchmaking"
+
+<div class="page-head"><h2>Tutorial</h2></div>
+
+<DocsPage Slug="tutorial-matchmaking">
+    <h1>Add matchmaking</h1>
+    <p class="lead">Pair two players into a room automatically.</p>
+
+    <h2>1. Enter the queue</h2>
+    <p>Players queue by game mode, region, and match size. Only same-bucket players match.</p>
+    <pre>MultiplayerService.join_matchmaking("duel_1v1", "global", 2, "Alice")
+MultiplayerService.matchmaking_queued.connect(func(_m, _r, _s): print("searching…"))</pre>
+
+    <h2>2. Get matched</h2>
+    <p>When the bucket fills, the server creates a room and adds the players — you're already in it.</p>
+    <pre>MultiplayerService.match_found.connect(func(room_id, code, players):
+    print("matched into ", code, " with ", players.size(), " players")
+    start_match())</pre>
+
+    <h2>3. Handle timeouts</h2>
+    <pre>MultiplayerService.matchmaking_timeout.connect(func(_mode, _region):
+    print("no opponent — try again"))
+# Cancel manually:
+MultiplayerService.leave_matchmaking()</pre>
+
+    <h2>4. Play</h2>
+    <p>Once matched you're in a normal room — relay inputs with <code>send_event</code> or sync
+        positions with <a href="/dashboard/docs/tutorial-state-sync">entity state</a>.</p>
+
+    <p>Full version: the <strong>1v1 Matchmaking Arena</strong> example in
+        <code>sdk/godot-gdscript/examples/matchmaking_arena/</code>.</p>
+
+    <div class="docs-next">
+        <a href="/dashboard/docs/tutorial-lobby">← Lobby</a>
+        <a href="/dashboard/docs/tutorial-state-sync">Simple state sync →</a>
+    </div>
+</DocsPage>

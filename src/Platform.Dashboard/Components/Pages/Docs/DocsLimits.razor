@@ -1,0 +1,45 @@
+@page "/dashboard/docs/limits"
+
+<div class="page-head"><h2>Limits &amp; pricing</h2></div>
+
+<DocsPage Slug="limits">
+    <h1>Limits &amp; pricing</h1>
+    <p class="lead">The limits enforced today, and the pricing tiers that are coming.</p>
+
+    <h2>Enforced limits (today)</h2>
+    <table>
+        <thead><tr><th>Limit</th><th>Default</th><th>Config</th></tr></thead>
+        <tbody>
+            <tr><td>Message size</td><td>16&nbsp;KB</td><td><code>Realtime__MaxMessageBytes</code></td></tr>
+            <tr><td>Messages / sec / connection</td><td>20 (burst 40)</td><td><code>Realtime__MaxMessagesPerSecond</code></td></tr>
+            <tr><td>Connections / project</td><td>unlimited</td><td><code>Realtime__MaxConnectionsPerProject</code></td></tr>
+            <tr><td>Entities / room</td><td>50</td><td><code>State__MaxEntitiesPerRoom</code></td></tr>
+            <tr><td>Entity state size</td><td>4&nbsp;KB</td><td><code>State__MaxEntityStateBytes</code></td></tr>
+            <tr><td>Room state size</td><td>16&nbsp;KB</td><td><code>State__MaxRoomStateBytes</code></td></tr>
+            <tr><td>State updates / sec / client</td><td>10</td><td><code>State__MaxStateUpdatesPerSecondPerClient</code></td></tr>
+            <tr><td>Persistence value size</td><td>64&nbsp;KB</td><td><code>Storage__MaxValueBytes</code></td></tr>
+            <tr><td>Persistence keys / player</td><td>100</td><td><code>Storage__MaxKeysPerPlayer</code></td></tr>
+        </tbody>
+    </table>
+
+    <h2>Pricing tiers (planned)</h2>
+    <div class="banner banner-warn">
+        Usage metering and billing land in a later milestone. Tiers below are a preview — during
+        the alpha, plans can be assigned manually and limits are the defaults above.
+    </div>
+    <table>
+        <thead><tr><th>Plan</th><th>Projects</th><th>CCU</th><th>Events / mo</th><th>State updates / mo</th><th>Storage</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Free</strong> · $0</td><td>1</td><td>20</td><td>50k</td><td>100k</td><td>100&nbsp;MB</td></tr>
+            <tr><td><strong>Indie</strong> · $15</td><td>3</td><td>100</td><td>1M</td><td>2M</td><td>1&nbsp;GB</td></tr>
+            <tr><td><strong>Studio</strong> · $59</td><td>10</td><td>500</td><td>10M</td><td>20M</td><td>10&nbsp;GB</td></tr>
+            <tr><td><strong>Growth</strong> · $199</td><td>25</td><td>2,000</td><td>50M</td><td>100M</td><td>50&nbsp;GB</td></tr>
+        </tbody>
+    </table>
+    <p class="muted">CCU = concurrent connected players. Pricing is indicative and may change before GA.</p>
+
+    <div class="docs-next">
+        <a href="/dashboard/docs/sdk-reference">← SDK reference</a>
+        <a href="/dashboard/docs/decision-guides">Choosing a model →</a>
+    </div>
+</DocsPage>

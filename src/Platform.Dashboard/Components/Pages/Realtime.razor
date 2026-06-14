@@ -1,0 +1,114 @@
+@page "/dashboard/realtime"
+@using Platform.Contracts.Admin
+@using Platform.Realtime.Diagnostics
+@inject RealtimeDiagnostics Diagnostics
+
+<div class="page-head">
+    <h2>Realtime</h2>
+    <span class="muted">refresh to update</span>
+</div>
+
+<div class="card">
+    <div class="section-title">Rooms (@_rooms.Count)</div>
+    @if (_rooms.Count == 0)
+    {
+        <div class="empty">No active rooms.</div>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Room</th><th>Code</th><th>Type</th><th>Project</th><th>Players</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var r in _rooms)
+                {
+                    <tr>
+                        <td class="mono"><a href="@($"/dashboard/rooms/{r.RoomId}")">@r.RoomId</a></td>
+                        <td><span class="badge badge-cyan">@r.Code</span></td>
+                        <td>
+                            @if (r.IsLobby)
+                            {
+                                <span class="badge badge-purple">lobby</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-dim">room</span>
+                            }
+                        </td>
+                        <td class="mono">@r.ProjectId</td>
+                        <td><strong>@r.MemberCount</strong></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<div class="card">
+    <div class="section-title">Matchmaking queue (@_matchmaking.TotalWaiting waiting)</div>
+    @if (_matchmaking.Queues.Count == 0)
+    {
+        <div class="empty">No players in the matchmaking queue.</div>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Game mode</th><th>Region</th><th>Match size</th><th>Waiting</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var q in _matchmaking.Queues)
+                {
+                    <tr>
+                        <td>@q.GameMode</td>
+                        <td class="muted">@q.Region</td>
+                        <td>@q.MatchSize</td>
+                        <td><strong>@q.Waiting</strong></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<div class="card">
+    <div class="section-title">Connections (@_connections.Count)</div>
+    @if (_connections.Count == 0)
+    {
+        <div class="empty">No active connections.</div>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th></th><th>Connection</th><th>Player</th><th>Project</th><th>Connected (UTC)</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var c in _connections)
+                {
+                    <tr>
+                        <td><span class="dot dot-online"></span></td>
+                        <td class="mono"><a href="@($"/dashboard/sessions/{c.ConnectionId}")">@c.ConnectionId</a></td>
+                        <td class="mono">@c.PlayerId</td>
+                        <td class="mono">@c.ProjectId</td>
+                        <td class="muted">@c.ConnectedAtUtc.ToString("u")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<RoomSummary> _rooms = [];
+    private IReadOnlyList<ConnectionSummary> _connections = [];
+    private AdminMatchmakingResponse _matchmaking = new(0, []);
+
+    protected override void OnInitialized()
+    {
+        _rooms = Diagnostics.GetRooms();
+        _connections = Diagnostics.GetConnections();
+        _matchmaking = Diagnostics.GetMatchmaking();
+    }
+}

@@ -1,0 +1,53 @@
+@page "/dashboard/sessions"
+@using Platform.Realtime.Diagnostics
+@inject RealtimeDiagnostics Diagnostics
+
+<div class="page-head">
+    <h2>Recent Sessions</h2>
+    <span class="badge badge-dim">@_sessions.Count</span>
+</div>
+
+<div class="card">
+    @if (_sessions.Count == 0)
+    {
+        <div class="empty">No sessions yet.</div>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Connection</th><th>Player</th><th>Project</th><th>Started (UTC)</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var s in _sessions)
+                {
+                    <tr>
+                        <td class="mono"><a href="@($"/dashboard/sessions/{s.ConnectionId}")">@s.ConnectionId</a></td>
+                        <td class="mono">@s.PlayerId</td>
+                        <td class="mono">@s.ProjectId</td>
+                        <td class="muted">@s.StartedAtUtc.ToString("u")</td>
+                        <td>
+                            @if (s.EndedAtUtc is null)
+                            {
+                                <span class="badge badge-green"><span class="dot dot-online"></span>active</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-dim">ended @s.EndedAtUtc.Value.ToString("HH:mm:ss")</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<SessionSummary> _sessions = [];
+
+    protected override void OnInitialized()
+    {
+        _sessions = Diagnostics.GetRecentSessions();
+    }
+}

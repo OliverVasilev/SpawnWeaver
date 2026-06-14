@@ -1,0 +1,41 @@
+@page "/dashboard/debugger"
+
+<div class="page-head">
+    <h2>Debugger</h2>
+    <span class="muted">understand what's happening in your game</span>
+</div>
+
+<div class="card">
+    <p class="muted" style="margin-top:0">
+        When multiplayer misbehaves, these tools show you why — live connections, per-player
+        timelines, common errors with fixes, and a viewer for player-submitted debug reports.
+    </p>
+</div>
+
+<div class="hub-grid">
+    <a class="hub-card" href="/dashboard/realtime">
+        <div class="hub-icon">📡</div>
+        <div class="hub-title">Live activity</div>
+        <div class="hub-desc">Active connections, rooms, lobbies, and the matchmaking queue right now.</div>
+    </a>
+    <a class="hub-card" href="/dashboard/sessions">
+        <div class="hub-icon">👤</div>
+        <div class="hub-title">Sessions</div>
+        <div class="hub-desc">Recent players. Open one for a full timeline of what they did.</div>
+    </a>
+    <a class="hub-card" href="/dashboard/errors">
+        <div class="hub-icon">⚠️</div>
+        <div class="hub-title">Errors</div>
+        <div class="hub-desc">Common failures grouped by type, each with a suggested fix.</div>
+    </a>
+    <a class="hub-card" href="/dashboard/debug">
+        <div class="hub-icon">📋</div>
+        <div class="hub-title">Debug bundle</div>
+        <div class="hub-desc">Paste a report a player sent you to inspect their client offline.</div>
+    </a>
+    <a class="hub-card" href="/dashboard/logs">
+        <div class="hub-icon">📜</div>
+        <div class="hub-title">Logs</div>
+        <div class="hub-desc">Recent server log records, filterable by level.</div>
+    </a>
+</div>

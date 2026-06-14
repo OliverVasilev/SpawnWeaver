@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bswheadlessautorc1"]
+
+[ext_resource type="Script" path="res://tests/headless_autoreconnect.gd" id="1_autorc"]
+
+[node name="HeadlessAutoReconnect" type="Node"]
+script = ExtResource("1_autorc")

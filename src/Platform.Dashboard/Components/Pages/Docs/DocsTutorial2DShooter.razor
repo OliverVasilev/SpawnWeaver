@@ -1,0 +1,418 @@
+@page "/dashboard/docs/tutorial-2d-shooter"
+
+<div class="page-head"><h2>Tutorial · 2D Shooter</h2></div>
+
+<DocsPage Slug="tutorial-2d-shooter">
+    <h1>Build a 2D multiplayer arena shooter</h1>
+    <p class="lead">
+        A top-down free-for-all where players move, aim, and shoot each other in real time. You'll
+        wire up matchmaking, sync players with state, fire bullets over the event relay, handle
+        damage and respawns, and show a live scoreboard — the full SpawnWeaver toolkit in one game.
+    </p>
+
+    <p style="margin:10px 0">
+        <span class="badge badge-cyan">Matchmaking</span>
+        <span class="badge badge-cyan">Entity state sync</span>
+        <span class="badge badge-cyan">Realtime events</span>
+        <span class="badge badge-cyan">Snapshots</span>
+        <span class="badge badge-green">Respawn &amp; score</span>
+    </p>
+
+    <div class="banner banner-warn">
+        <span>📋</span>
+        <span>First time? Do the <a href="/dashboard/docs/getting-started">Quickstart</a> — create a
+            project, install the SDK, and save your public key + server URL in the
+            <strong>SpawnWeaver dock</strong>. This tutorial uses
+            <code>connect_using_config()</code>, which reads those saved values.</span>
+    </div>
+
+    <div class="banner" style="border-color:var(--border);color:var(--steel)">
+        <span>💡</span>
+        <span>Want the movement part with <em>no</em> networking code? The
+            <a href="/dashboard/docs/sync-nodes">SpawnSync drop-in node</a> replicates a node's
+            transform with built-in interpolation. This tutorial wires it by hand so you understand
+            what's happening underneath.</span>
+    </div>
+
+    <h2>How it works</h2>
+    <p>The design keeps networking simple and cheat-resistant for a friendly game:</p>
+    <ul>
+        <li><strong>Each player owns one entity</strong> (keyed by their player id) holding
+            <code>x, y, rot, hp, kills, name</code>. Moving patches that entity; everyone else
+            receives the change. Late joiners get a full <strong>snapshot</strong>.</li>
+        <li><strong>Shots are events.</strong> Firing sends a <code>shoot</code> event with a
+            position + direction; every other client spawns that bullet locally.</li>
+        <li><strong>You are the authority on hits against you.</strong> Each client only checks
+            bullets against <em>its own</em> player, lowers its own <code>hp</code>, and on death
+            sends a <code>frag</code> event so the shooter can count the kill.</li>
+    </ul>
+
+    <h2>1. Create the scene</h2>
+    <p>Add a <strong>Node2D</strong> scene, attach a new script, and save it (e.g.
+        <code>arena_2d.tscn</code>). The script builds its own UI and arena, so there's nothing else
+        to wire up. Everything below is <strong>one script</strong> — paste each part in order.</p>
+
+    <h2>2. Constants &amp; state</h2>
+    <pre>extends Node2D
+## SpawnWeaver tutorial — 2D top-down arena shooter (free-for-all).
+
+const GAME_MODE := "arena2d_ffa"
+const SPEED := 220.0
+const BULLET_SPEED := 540.0
+const FIRE_COOLDOWN := 0.22
+const SEND_INTERVAL := 0.05      # 20 position updates/sec — under the rate limit
+const MAX_HP := 100
+const HIT_DAMAGE := 25
+const PLAYER_RADIUS := 16.0
+const BULLET_RADIUS := 5.0
+const ARENA := Rect2(40, 96, 880, 460)
+
+var _status: Label
+var _find_btn: Button
+
+var _in_match := false
+var _respawning := false
+var _my_id := ""
+var _my_pos := Vector2.ZERO
+var _my_rot := 0.0
+var _fire_cd := 0.0
+var _send_accum := 0.0
+var _players: Dictionary = {}    # entity_id -> { pos, rot, hp, kills, name }
+var _bullets: Array = []         # [{ owner, pos, vel, ttl }]</pre>
+
+    <h2>3. Connect &amp; subscribe to signals</h2>
+    <p>In <code>_ready()</code> we build a tiny UI and subscribe to everything we need: matchmaking,
+        state sync, and the event relay. Guest sign-in happens automatically on connect.</p>
+    <pre>func _ready() -> void:
+    _build_ui()
+    MultiplayerService.welcomed.connect(func(_id): _set_status("Connected. Click Find Match."))
+    MultiplayerService.connection_error.connect(func(r): _set_status("Connection error: " + r))
+    MultiplayerService.matchmaking_queued.connect(func(_m, _r, _s): _set_status("Searching for players…"))
+    MultiplayerService.match_found.connect(_on_match_found)
+    MultiplayerService.matchmaking_timeout.connect(func(_m, _r): _on_match_over("No match found — try again."))
+    MultiplayerService.state_snapshot_received.connect(_on_snapshot)
+    MultiplayerService.entity_state_changed.connect(_on_entity_changed)
+    MultiplayerService.entity_state_deleted.connect(func(id): _players.erase(id))
+    MultiplayerService.player_left.connect(func(_r, pid): _players.erase(pid))
+    MultiplayerService.event_received.connect(_on_event)</pre>
+
+    <h2>4. Find a match &amp; spawn your player</h2>
+    <p>Clicking <em>Find Match</em> enters the matchmaking queue. When the server pairs players it
+        fires <code>match_found</code> with a generated room. We then create and <strong>own</strong>
+        a player entity — this is what other clients see, and what late joiners receive in their
+        snapshot.</p>
+    <pre>func _on_match_found(_room_id: String, room_code: String, _players_list: Array) -> void:
+    _in_match = true
+    _respawning = false
+    _bullets.clear()
+    _my_id = MultiplayerService.player_id
+    _my_pos = _random_spawn()
+    # Create and OWN my player entity. Late joiners get this in their snapshot.
+    MultiplayerService.set_entity_state(_my_id, {
+        "x": _my_pos.x, "y": _my_pos.y, "rot": 0.0,
+        "hp": MAX_HP, "kills": 0, "name": _my_name(),
+    })
+    _find_btn.disabled = true
+    _set_status("Match %s! Arrows move · mouse aims · click/space shoots." % room_code)</pre>
+
+    <h2>5. Move &amp; aim — sync via entity state</h2>
+    <p>Each frame we move with the arrow keys, aim at the mouse, and (a few times a second) patch our
+        entity so everyone else sees us. We throttle to stay under the rate limit.</p>
+    <pre>func _process(delta: float) -> void:
+    if not _in_match:
+        return
+    _fire_cd = maxf(0.0, _fire_cd - delta)
+    if not _respawning:
+        _handle_input(delta)
+    _update_bullets(delta)
+    queue_redraw()
+
+func _handle_input(delta: float) -> void:
+    var move := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+    if move != Vector2.ZERO:
+        _my_pos += move * SPEED * delta
+        _my_pos.x = clampf(_my_pos.x, ARENA.position.x, ARENA.end.x)
+        _my_pos.y = clampf(_my_pos.y, ARENA.position.y, ARENA.end.y)
+    _my_rot = (get_global_mouse_position() - _my_pos).angle()
+    if Input.is_action_pressed("ui_accept") or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+        _try_fire()
+    _send_accum += delta
+    if _send_accum >= SEND_INTERVAL:
+        _send_accum = 0.0
+        MultiplayerService.patch_entity_state(_my_id, {"x": _my_pos.x, "y": _my_pos.y, "rot": _my_rot})</pre>
+
+    <h2>6. Shoot — broadcast bullets as events</h2>
+    <p>Firing spawns a bullet locally (the relay never echoes to the sender) and sends a
+        <code>shoot</code> event so everyone else spawns the same bullet. Receiving a <code>shoot</code>
+        creates a bullet owned by the firer.</p>
+    <pre>func _try_fire() -> void:
+    if _fire_cd > 0.0:
+        return
+    _fire_cd = FIRE_COOLDOWN
+    var dir := Vector2.RIGHT.rotated(_my_rot)
+    var muzzle := _my_pos + dir * (PLAYER_RADIUS + 6.0)
+    _bullets.append({"owner": _my_id, "pos": muzzle, "vel": dir * BULLET_SPEED, "ttl": 1.4})
+    MultiplayerService.send_event("shoot", {"x": muzzle.x, "y": muzzle.y, "dx": dir.x, "dy": dir.y})
+
+func _on_event(event: String, data: Dictionary, from_id: String) -> void:
+    if event == "shoot":
+        var dir := Vector2(float(data.get("dx", 0.0)), float(data.get("dy", 0.0)))
+        _bullets.append({
+            "owner": from_id,
+            "pos": Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))),
+            "vel": dir * BULLET_SPEED,
+            "ttl": 1.4,
+        })
+    elif event == "frag" and str(data.get("killer", "")) == _my_id:
+        var me: Dictionary = _players.get(_my_id, {})
+        me["kills"] = int(me.get("kills", 0)) + 1
+        _players[_my_id] = me
+        MultiplayerService.patch_entity_state(_my_id, {"kills": me["kills"]})</pre>
+
+    <h2>7. Damage, death &amp; respawn</h2>
+    <p>Bullets travel locally. Each client only resolves hits on <em>itself</em> from bullets it
+        didn't fire — that keeps health authoritative and avoids double-counting. On death we credit
+        the shooter with a <code>frag</code> event and respawn.</p>
+    <pre>func _update_bullets(delta: float) -> void:
+    var still_alive: Array = []
+    for b in _bullets:
+        b["pos"] += b["vel"] * delta
+        b["ttl"] -= delta
+        if b["ttl"] &lt;= 0.0 or not ARENA.grow(40.0).has_point(b["pos"]):
+            continue
+        if not _respawning and b["owner"] != _my_id and b["pos"].distance_to(_my_pos) &lt;= PLAYER_RADIUS + BULLET_RADIUS:
+            _take_hit(str(b["owner"]))
+            continue                      # consume the bullet
+        still_alive.append(b)
+    _bullets = still_alive
+
+func _take_hit(shooter_id: String) -> void:
+    var me: Dictionary = _players.get(_my_id, {})
+    var hp := int(me.get("hp", MAX_HP)) - HIT_DAMAGE
+    if hp &lt;= 0:
+        MultiplayerService.send_event("frag", {"killer": shooter_id})   # credit the shooter
+        _respawn()
+    else:
+        me["hp"] = hp
+        _players[_my_id] = me
+        MultiplayerService.patch_entity_state(_my_id, {"hp": hp})
+
+func _respawn() -> void:
+    _respawning = true
+    _set_status("You were fragged! Respawning…")
+    await get_tree().create_timer(1.5).timeout
+    _my_pos = _random_spawn()
+    var me: Dictionary = _players.get(_my_id, {})
+    me["hp"] = MAX_HP
+    _players[_my_id] = me
+    MultiplayerService.patch_entity_state(_my_id, {"x": _my_pos.x, "y": _my_pos.y, "hp": MAX_HP})
+    _respawning = false
+    _set_status("Fight! Arrows move · mouse aims · click/space shoots.")</pre>
+
+    <h2>8. Receive other players (snapshot + updates)</h2>
+    <p>On join we get a snapshot of everyone already in the room; afterwards each change arrives via
+        <code>entity_state_changed</code> with the full merged state. We ignore our own entity since
+        we render it from our local position.</p>
+    <pre>func _on_snapshot(snapshot: Dictionary) -> void:
+    for e in snapshot.get("entities", []):
+        var id := str(e.get("entityId", ""))
+        if id != _my_id:
+            _apply_entity(id, e.get("state", {}))
+
+func _on_entity_changed(entity_id: String, _patch: Dictionary, full: Dictionary) -> void:
+    if entity_id != _my_id:        # I'm authoritative over my own dot
+        _apply_entity(entity_id, full)
+
+func _apply_entity(id: String, s: Dictionary) -> void:
+    _players[id] = {
+        "pos": Vector2(float(s.get("x", 0.0)), float(s.get("y", 0.0))),
+        "rot": float(s.get("rot", 0.0)),
+        "hp": int(s.get("hp", MAX_HP)),
+        "kills": int(s.get("kills", 0)),
+        "name": str(s.get("name", "Player")),
+    }
+
+func _on_match_over(reason: String) -> void:
+    _in_match = false
+    _find_btn.disabled = false
+    _set_status(reason)</pre>
+
+    <h2>9. Draw the arena, players, bullets &amp; scoreboard</h2>
+    <pre>func _draw() -> void:
+    draw_rect(ARENA, Color(0.10, 0.09, 0.07), true)
+    draw_rect(ARENA, Color(0.42, 0.30, 0.18), false, 3.0)
+    if not _in_match:
+        return
+    for id in _players:
+        if id == _my_id:
+            continue
+        var p: Dictionary = _players[id]
+        _draw_player(p["pos"], float(p["rot"]), Color(0.91, 0.44, 0.29), int(p["hp"]), str(p["name"]))
+    var me: Dictionary = _players.get(_my_id, {})
+    if not _respawning:
+        _draw_player(_my_pos, _my_rot, Color(0.96, 0.70, 0.36), int(me.get("hp", MAX_HP)), "You")
+    for b in _bullets:
+        draw_circle(b["pos"], BULLET_RADIUS, Color(1.0, 0.95, 0.7))
+    _draw_scoreboard()
+
+func _draw_player(pos: Vector2, rot: float, color: Color, hp: int, label: String) -> void:
+    draw_circle(pos, PLAYER_RADIUS, color)
+    draw_line(pos, pos + Vector2.RIGHT.rotated(rot) * (PLAYER_RADIUS + 10.0), color, 4.0)
+    var w := 36.0
+    var bar := pos + Vector2(-w * 0.5, -PLAYER_RADIUS - 12.0)
+    draw_rect(Rect2(bar, Vector2(w, 5.0)), Color(0, 0, 0, 0.5), true)
+    draw_rect(Rect2(bar, Vector2(w * clampf(float(hp) / MAX_HP, 0.0, 1.0), 5.0)), Color(0.56, 0.81, 0.43), true)
+    draw_string(ThemeDB.fallback_font, pos + Vector2(-w * 0.5, -PLAYER_RADIUS - 16.0), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13)
+
+func _draw_scoreboard() -> void:
+    var rows: Array = _players.values()
+    rows.sort_custom(func(a, b): return int(a.get("kills", 0)) > int(b.get("kills", 0)))
+    var y := 110.0
+    draw_string(ThemeDB.fallback_font, Vector2(ARENA.end.x - 150.0, y), "SCORE", HORIZONTAL_ALIGNMENT_LEFT, -1, 14)
+    for r in rows:
+        y += 20.0
+        draw_string(ThemeDB.fallback_font, Vector2(ARENA.end.x - 150.0, y), "%s  %d" % [str(r.get("name", "?")), int(r.get("kills", 0))], HORIZONTAL_ALIGNMENT_LEFT, -1, 13)</pre>
+
+    <h2>10. UI &amp; helpers</h2>
+    <pre>func _random_spawn() -> Vector2:
+    return Vector2(randf_range(ARENA.position.x + 40.0, ARENA.end.x - 40.0),
+        randf_range(ARENA.position.y + 40.0, ARENA.end.y - 40.0))
+
+func _my_name() -> String:
+    return "P%d" % (randi() % 1000)
+
+func _build_ui() -> void:
+    var bar := HBoxContainer.new()
+    bar.position = Vector2(16, 16)
+    bar.add_theme_constant_override("separation", 8)
+    add_child(bar)
+    var connect_btn := Button.new()
+    connect_btn.text = "Connect"
+    connect_btn.pressed.connect(_on_connect)
+    bar.add_child(connect_btn)
+    _find_btn = Button.new()
+    _find_btn.text = "Find Match"
+    _find_btn.disabled = true
+    _find_btn.pressed.connect(_on_find)
+    bar.add_child(_find_btn)
+    _status = Label.new()
+    _status.position = Vector2(16, 56)
+    _status.text = "Click Connect (uses the key + URL saved in the SpawnWeaver dock)."
+    add_child(_status)
+
+func _on_connect() -> void:
+    if MultiplayerService.connect_using_config():
+        _set_status("Connecting…")
+        _find_btn.disabled = false
+    else:
+        _set_status("Save your public key + server URL in the SpawnWeaver dock first.")
+
+func _on_find() -> void:
+    if not MultiplayerService.is_connected_to_server():
+        _set_status("Connect first.")
+        return
+    MultiplayerService.join_matchmaking(GAME_MODE, "", 2, _my_name())
+    _find_btn.disabled = true
+    _set_status("Searching for players…")
+
+func _set_status(text: String) -> void:
+    _status.text = text</pre>
+
+    <h2>Simpler: the SpawnSync version</h2>
+    <p>The walkthrough above syncs movement by hand so you can see the protocol. Here's the same game
+        with movement handled by the <a href="/dashboard/docs/sync-nodes">SpawnSync</a> drop-in node —
+        it streams each player's transform and interpolates remote players for you. Shooting, damage,
+        and respawn are unchanged (they're events, not transforms).</p>
+
+    <h3>A player scene</h3>
+    <p>Make a <code>player.tscn</code>: a <code>Node2D</code> with the script below (a tiny bit of
+        state + a visual), plus a <strong>SpawnSync</strong> child. On the SpawnSync node turn on
+        <em>Sync position</em> and <em>Sync rotation</em>, and set <em>Synced properties</em> to
+        <code>hp</code>.</p>
+    <pre>extends Node2D
+var hp := 100
+var color := Color.WHITE
+
+func _draw() -> void:
+    draw_circle(Vector2.ZERO, 16.0, color)                 # body
+    draw_line(Vector2.ZERO, Vector2.RIGHT * 26.0, color, 4.0)   # barrel (node rotation aims it)</pre>
+
+    <h3>Spawn local + remote players</h3>
+    <p>SpawnSync handles sending and interpolation; you just decide when to create the scenes:</p>
+    <pre>const PlayerScene := preload("res://player.tscn")
+var _me: Node2D = null
+var _remotes := {}
+
+func _ready() -> void:
+    MultiplayerService.match_found.connect(func(_r, _c, _p): _spawn_local())
+    MultiplayerService.state_snapshot_received.connect(func(s):
+        for e in s.get("entities", []): _ensure_remote(str(e.get("entityId", ""))))
+    MultiplayerService.entity_state_changed.connect(func(id, _p, _f): _ensure_remote(id))
+    MultiplayerService.entity_state_deleted.connect(func(id): _remotes.erase(id))
+    MultiplayerService.event_received.connect(_on_event)
+    MultiplayerService.connect_using_config()
+
+func _spawn_local() -> void:
+    _me = PlayerScene.instantiate()
+    _me.color = Color(0.96, 0.70, 0.36)
+    _me.position = _random_spawn()
+    _me.get_node("SpawnSync").local = true        # streams my transform automatically
+    add_child(_me)
+
+func _ensure_remote(id: String) -> void:
+    if id == MultiplayerService.player_id or _remotes.has(id):
+        return
+    var p := PlayerScene.instantiate()
+    p.color = Color(0.91, 0.44, 0.29)
+    p.get_node("SpawnSync").entity_id = id         # interpolates this player; frees itself on leave
+    add_child(p)
+    _remotes[id] = p</pre>
+
+    <h3>Move only yourself</h3>
+    <pre>func _process(delta: float) -> void:
+    if _me == null:
+        return
+    var move := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+    _me.position += move * SPEED * delta
+    _me.rotation = (_me.get_global_mouse_position() - _me.position).angle()
+    _me.queue_redraw()
+    if Input.is_action_pressed("ui_accept") or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+        _try_fire(_me.position, _me.rotation)      # same shoot event as before
+    # No patch_entity_state here — SpawnSync streams _me for you.</pre>
+
+    <p><strong>What this replaces</strong> from the manual version: the
+        <code>set_entity_state</code>/<code>patch_entity_state</code> movement calls,
+        <code>_apply_entity</code>, <code>_on_entity_changed</code>, and the transform parts of
+        <code>_on_snapshot</code> — SpawnSync owns all of it. Keep <code>_try_fire</code> +
+        <code>_on_event</code> (shots) and your hit/respawn logic; because <code>hp</code> is a
+        Synced property, set <code>_me.hp</code> on a hit and it replicates to everyone.</p>
+
+    <h2>11. Play it with two windows</h2>
+    <ol>
+        <li>In Godot: <em>Debug → Run Multiple Instances</em>, set <strong>2</strong>.</li>
+        <li>Run the scene. In <strong>both</strong> windows click <strong>Connect</strong>, then
+            <strong>Find Match</strong> — the server pairs you into the same arena.</li>
+        <li>Arrow keys move, the mouse aims, click or space shoots. Frag your opponent and watch the
+            scoreboard tick up; check live connections on the
+            <a href="/dashboard/debugger">Debugger</a>.</li>
+    </ol>
+    <p class="muted">Want more than two players in one arena? Raise the match size in
+        <code>join_matchmaking(GAME_MODE, "", 2, …)</code> (e.g. <code>4</code>) — everyone in the
+        room is rendered automatically.</p>
+
+    <h2>Extend it</h2>
+    <ul>
+        <li><strong>Lobbies instead of matchmaking</strong> — let friends play by code with
+            <code>create_lobby()</code> / <code>join_lobby()</code> (see
+            <a href="/dashboard/docs/tutorial-lobby">Lobby + ready check</a>).</li>
+        <li><strong>Persist stats</strong> — save total kills to player storage so they carry across
+            sessions (see <a href="/dashboard/docs/tutorial-profile">Save a player profile</a>).</li>
+        <li><strong>Match state</strong> — have the host track a round timer or target score with
+            <code>patch_room_state()</code> (see <a href="/dashboard/docs/tutorial-state-sync">Simple state sync</a>).</li>
+    </ul>
+
+    <div class="docs-next">
+        <a href="/dashboard/docs/getting-started">← Quickstart</a>
+        <a href="/dashboard/docs/tutorial-3d-shooter">3D shooter →</a>
+    </div>
+</DocsPage>

@@ -1,0 +1,50 @@
+@page "/dashboard/docs/tutorial-profile"
+
+<div class="page-head"><h2>Tutorial</h2></div>
+
+<DocsPage Slug="tutorial-profile">
+    <h1>Save a player profile</h1>
+    <p class="lead">Durable key-value storage that outlives a session — profiles, XP, inventory.</p>
+
+    <div class="banner banner-warn">
+        Persistence is written through your <strong>secret</strong> key, so it runs from a server
+        you control — never ship the secret key in a game client. A player-scoped client API is
+        on the roadmap; until then, route saves through a small trusted endpoint.
+    </div>
+
+    <h2>How it works</h2>
+    <p>Storage is project-scoped key-value data per player. Operations authenticate with the
+        project's secret key (<code>Authorization: Bearer sk_…</code>).</p>
+
+    <h2>Save values</h2>
+    <pre>curl -X PUT \
+  http://localhost:5000/api/storage/proj_xxx/players/player_1/keys/display_name \
+  -H "Authorization: Bearer sk_xxx" -d 'Alice'
+
+curl -X PUT \
+  http://localhost:5000/api/storage/proj_xxx/players/player_1/keys/xp \
+  -H "Authorization: Bearer sk_xxx" -d '1500'</pre>
+
+    <h2>Load a profile on login</h2>
+    <pre>curl http://localhost:5000/api/storage/proj_xxx/players/player_1/keys/xp \
+  -H "Authorization: Bearer sk_xxx"
+# 200 -> { "key": "xp", "value": "1500", "updatedAtUtc": "…" }
+
+curl http://localhost:5000/api/storage/proj_xxx/players/player_1/keys \
+  -H "Authorization: Bearer sk_xxx"   # list a player's keys</pre>
+
+    <h2>State sync vs persistence</h2>
+    <p>Use <a href="/dashboard/docs/tutorial-state-sync">state sync</a> for live, in-room values
+        (positions, scores) that vanish when the room ends. Use persistence for data that must
+        survive between sessions (profiles, progression). See
+        <a href="/dashboard/docs/concepts">Core concepts</a>.</p>
+
+    <h2>Limits</h2>
+    <p>Values and key counts are quota-limited per player (configurable via <code>Storage__*</code>).
+        Oversized values return <code>413</code>; exceeding the key quota returns <code>409</code>.</p>
+
+    <div class="docs-next">
+        <a href="/dashboard/docs/tutorial-state-sync">← State sync</a>
+        <a href="/dashboard/docs/tutorial-debug">Debug a connection →</a>
+    </div>
+</DocsPage>

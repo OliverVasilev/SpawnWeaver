@@ -1,0 +1,93 @@
+@page "/dashboard/projects"
+@using Platform.Application.Projects
+@inject ProjectService ProjectSvc
+@inject DashboardUser User
+
+<div class="page-head">
+    <h2>Projects</h2>
+    <span class="badge badge-dim">@_projects.Count</span>
+</div>
+
+<div class="card">
+    <div class="section-title" style="margin-top:0">Create a project</div>
+    <p class="muted" style="margin-top:0">
+        Name it and you'll get a <strong>public key</strong> (safe to ship) and a
+        <strong>secret key</strong> (server-side only, shown once). Manage and regenerate keys
+        anytime from the project page.
+    </p>
+    <div class="create-row">
+        <input id="cp-name" class="field" type="text" placeholder="Project name (e.g. My Game)" autocomplete="off" />
+        <button class="btn btn-primary" type="button" onclick="swCreateProject()">Create</button>
+        <span id="cp-status"></span>
+    </div>
+    <div id="cp-result" class="hidden" style="margin-top:18px"></div>
+</div>
+
+<div class="card">
+    <div class="section-title">
+        @if (_scopedToOrg)
+        {
+            <text>Your projects (@_projects.Count)</text>
+        }
+        else
+        {
+            <text>All projects (@_projects.Count)</text>
+        }
+    </div>
+    @if (_projects.Count == 0)
+    {
+        <div class="empty">No projects yet — create your first one above.</div>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Name</th><th>Id</th><th>Public key</th><th>Status</th><th>Created (UTC)</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in _projects)
+                {
+                    <tr>
+                        <td><a href="/dashboard/projects/@p.Id">@p.Name</a></td>
+                        <td class="mono">@p.Id</td>
+                        <td class="mono">@p.PublicKey</td>
+                        <td>
+                            @if (p.IsActive)
+                            {
+                                <span class="badge badge-green">active</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-dim">inactive</span>
+                            }
+                        </td>
+                        <td class="muted">@p.CreatedAtUtc.ToString("u")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <p class="muted" style="margin:12px 0 0">
+            Open a project to view details and manage its keys. Secret keys are stored only as a
+            hash and are never shown here.
+        </p>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<Platform.Domain.Projects.Project> _projects = [];
+    private bool _scopedToOrg;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var org = await User.GetOrganizationAsync();
+        if (org is not null)
+        {
+            _scopedToOrg = true;
+            _projects = await ProjectSvc.ListByOrganizationAsync(org.Id);
+        }
+        else
+        {
+            _projects = await ProjectSvc.ListAsync(200);
+        }
+    }
+}

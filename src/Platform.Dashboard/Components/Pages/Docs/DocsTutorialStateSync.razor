@@ -1,0 +1,51 @@
+@page "/dashboard/docs/tutorial-state-sync"
+
+<div class="page-head"><h2>Tutorial</h2></div>
+
+<DocsPage Slug="tutorial-state-sync">
+    <h1>Simple state sync</h1>
+    <p class="lead">Keep player positions aligned, and catch late joiners up with a snapshot.</p>
+
+    <h2>1. Spawn &amp; own an entity</h2>
+    <p>Set an entity's state to create it — you become its owner. Key it by your player id.</p>
+    <pre>var my_id := MultiplayerService.player_id
+MultiplayerService.set_entity_state(my_id, { "x": 120, "y": 80 })</pre>
+
+    <h2>2. Patch as you move</h2>
+    <p>Send partial updates; throttle them (e.g. ~15/sec) to stay under the rate limit.</p>
+    <pre>MultiplayerService.patch_entity_state(my_id, { "x": new_x, "y": new_y })
+
+MultiplayerService.entity_state_changed.connect(func(id, _patch, full):
+    move_dot(id, Vector2(full.x, full.y)))</pre>
+
+    <h2>3. Handle the late-join snapshot</h2>
+    <p>When you join a room that already has state, you receive everything at once.</p>
+    <pre>MultiplayerService.state_snapshot_received.connect(func(snap):
+    for e in snap.entities:
+        spawn_dot(e.entityId, e.state))</pre>
+
+    <h2>4. Room state &amp; deletion</h2>
+    <pre># Host-only shared state:
+MultiplayerService.patch_room_state({ "round": 2, "phase": "combat" })
+MultiplayerService.room_state_changed.connect(func(_patch, state): set_round(state.round))
+
+# Remove your entity:
+MultiplayerService.delete_entity_state(my_id)
+MultiplayerService.entity_state_deleted.connect(func(id): remove_dot(id))</pre>
+
+    <h2>Rules &amp; limits</h2>
+    <ul>
+        <li>Only an entity's <strong>owner</strong> can update/delete it; only the <strong>host</strong>
+            can patch room state. Violations arrive on <code>state_update_rejected</code>.</li>
+        <li>Defaults: 50 entities/room, 4&nbsp;KB per entity, 16&nbsp;KB room state, 10 updates/sec/client.</li>
+        <li>v1 has no prediction or interpolation — interpolate on the client for smoothness.</li>
+    </ul>
+
+    <p>Full version: the <strong>Simple State Sync Demo</strong> in
+        <code>sdk/godot-gdscript/examples/state_sync/</code>.</p>
+
+    <div class="docs-next">
+        <a href="/dashboard/docs/tutorial-matchmaking">← Matchmaking</a>
+        <a href="/dashboard/docs/tutorial-profile">Save a player profile →</a>
+    </div>
+</DocsPage>

@@ -1,0 +1,145 @@
+@page "/dashboard/rooms/{RoomId}"
+@using Platform.Contracts.Admin
+@using Platform.Realtime.Diagnostics
+@using RoomDetailDto = Platform.Contracts.Admin.RoomDetail
+@inject RealtimeDiagnostics Diagnostics
+
+<div class="page-head">
+    <h2>@(_room?.IsLobby == true ? "Lobby" : "Room") Inspector</h2>
+    <a class="btn btn-ghost btn-sm" href="/dashboard/realtime">← Realtime</a>
+</div>
+
+@if (_room is null)
+{
+    <div class="card">
+        <div class="empty">
+            No active room <span class="mono">@RoomId</span>. It may have closed or expired.
+        </div>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="section-title">Details</div>
+        <div class="kv">
+            <div class="kv-label">Room ID</div><div class="mono">@_room.RoomId</div>
+            <div class="kv-label">Code</div><div><span class="badge badge-cyan">@_room.Code</span></div>
+            <div class="kv-label">Type</div>
+            <div>
+                @if (_room.IsLobby)
+                {
+                    <span class="badge badge-purple">lobby</span>
+                }
+                else
+                {
+                    <span class="badge badge-dim">room</span>
+                }
+            </div>
+            <div class="kv-label">Project</div><div class="mono">@_room.ProjectId</div>
+            <div class="kv-label">Host</div><div class="mono">@(_room.HostPlayerId ?? "—")</div>
+            <div class="kv-label">Players</div><div><strong>@_room.MemberCount</strong>@(_room.MaxPlayers is int max ? $" / {max}" : "")</div>
+            @if (_room.IsLobby)
+            {
+                <div class="kv-label">Name</div><div>@(_room.Name ?? "—")</div>
+                <div class="kv-label">Visibility</div><div>@(_room.Visibility ?? "—")</div>
+            }
+            <div class="kv-label">Created (UTC)</div><div class="muted">@_room.CreatedAtUtc.ToString("u")</div>
+            <div class="kv-label">Last activity (UTC)</div><div class="muted">@_room.LastActivityAtUtc.ToString("u")</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Members (@_room.Members.Count)</div>
+        @if (_room.Members.Count == 0)
+        {
+            <div class="empty">No members.</div>
+        }
+        else
+        {
+            <table>
+                <thead><tr><th>Player</th><th>Name</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var m in _room.Members)
+                    {
+                        <tr>
+                            <td class="mono">@m.PlayerId</td>
+                            <td>@(m.PlayerName ?? "—")</td>
+                            <td>
+                                @if (m.PlayerId == _room.HostPlayerId)
+                                {
+                                    <span class="badge badge-green">host</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    @if (_room.Metadata.Count > 0)
+    {
+        <div class="card">
+            <div class="section-title">Metadata</div>
+            <div class="kv">
+                @foreach (var kv in _room.Metadata)
+                {
+                    <div class="kv-label">@kv.Key</div><div class="mono">@kv.Value</div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="card">
+        <div class="section-title">Room state (@_room.RoomState.Count)</div>
+        @if (_room.RoomState.Count == 0)
+        {
+            <div class="empty">No room state set.</div>
+        }
+        else
+        {
+            <div class="kv">
+                @foreach (var kv in _room.RoomState)
+                {
+                    <div class="kv-label">@kv.Key</div><div class="mono">@kv.Value</div>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="card">
+        <div class="section-title">Entities (@_room.Entities.Count)</div>
+        @if (_room.Entities.Count == 0)
+        {
+            <div class="empty">No entities in this room.</div>
+        }
+        else
+        {
+            <table>
+                <thead><tr><th>Entity</th><th>Owner</th><th>State</th><th>Updated (UTC)</th></tr></thead>
+                <tbody>
+                    @foreach (var e in _room.Entities)
+                    {
+                        <tr>
+                            <td class="mono">@e.EntityId</td>
+                            <td class="mono">@e.OwnerId</td>
+                            <td class="mono">@e.State</td>
+                            <td class="muted">@e.UpdatedAtUtc.ToString("HH:mm:ss")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string RoomId { get; set; } = "";
+
+    private RoomDetailDto? _room;
+
+    protected override void OnInitialized()
+    {
+        _room = Diagnostics.GetRoomDetail(RoomId);
+    }
+}

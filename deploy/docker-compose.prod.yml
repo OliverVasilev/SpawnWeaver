@@ -1,0 +1,78 @@
+# SpawnWeaver — production stack for a single VPS (e.g. Hetzner).
+# Caddy (automatic HTTPS) -> API -> PostgreSQL. WebSockets pass through Caddy transparently.
+#
+# First-time setup (from the repo root on the server):
+#   cp deploy/.env.example deploy/.env   &&   edit deploy/.env
+#   docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml up -d --build
+#
+# See docs/hosting-hetzner.md for the full walkthrough.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: spawnweaver-caddy
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in deploy/.env}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in deploy/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: src/Platform.Api/Dockerfile
+    image: spawnweaver/platform-api:prod
+    container_name: spawnweaver-api
+    depends_on:
+      db:
+        condition: service_healthy
+    # No host port: only Caddy talks to the API, over the internal network.
+    expose:
+      - "8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      Database__Provider: postgres
+      ConnectionStrings__Default: "Host=db;Port=5432;Database=spawnweaver;Username=spawnweaver;Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}"
+      # Canonical public URL — used to build links in emails and the SDK installer.
+      App__PublicBaseUrl: "https://${DOMAIN}"
+      # Transactional email via Resend (omit the API key to fall back to the dev/logging sender).
+      Email__Provider: resend
+      Email__Resend__ApiKey: ${EMAIL__RESEND__APIKEY:-}
+      Email__FromAddress: ${EMAIL__FROMADDRESS:-onboarding@resend.dev}
+      Email__FromName: ${EMAIL__FROMNAME:-SpawnWeaver}
+      # Realtime tuning (optional; defaults shown).
+      Realtime__MaxMessageBytes: "16384"
+      Realtime__MaxMessagesPerSecond: "20"
+      Realtime__MessageBurst: "40"
+      Realtime__EmptyRoomTtl: "00:01:00"
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: spawnweaver-db
+    environment:
+      POSTGRES_DB: spawnweaver
+      POSTGRES_USER: spawnweaver
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - spawnweaver-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spawnweaver -d spawnweaver"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  spawnweaver-pgdata:
+  caddy-data:
+  caddy-config:

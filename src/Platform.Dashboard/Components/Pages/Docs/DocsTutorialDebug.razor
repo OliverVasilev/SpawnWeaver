@@ -1,0 +1,50 @@
+@page "/dashboard/docs/tutorial-debug"
+
+<div class="page-head"><h2>Tutorial</h2></div>
+
+<DocsPage Slug="tutorial-debug">
+    <h1>Debug a failed connection</h1>
+    <p class="lead">Find out why a player couldn't connect, join, match, or sync.</p>
+
+    <h2>1. Turn on SDK debug logging</h2>
+    <pre>MultiplayerService.set_debug_enabled(true)
+# [SpawnWeaver][connection] connected
+# [SpawnWeaver][auth] authenticated as player_ab12…
+# [SpawnWeaver][error] room_not_found: Room 'ZZZZZZ' was not found.</pre>
+
+    <h2>2. Listen for structured errors</h2>
+    <pre>MultiplayerService.sdk_error.connect(func(err):
+    # { code, message, details, retryable }
+    push_warning(err.message))</pre>
+    <p>State-update rejections arrive separately on <code>state_update_rejected</code>.</p>
+
+    <h2>3. Copy a debug report</h2>
+    <p>Ask a player to send you their report — it captures client-side state the server never saw.</p>
+    <pre>DisplayServer.clipboard_set(MultiplayerService.create_debug_report_string())</pre>
+    <p>Paste it into the dashboard's <a href="/dashboard/debug">Debug bundle viewer</a> to inspect
+        their connection state, last 50 messages, errors, and latency.</p>
+
+    <h2>4. Use the dashboard debugger</h2>
+    <ul>
+        <li><a href="/dashboard/sessions">Sessions</a> — open a player to see a full timeline
+            (connected → authenticated → actions → rejections → disconnected) with their IP and
+            SDK/engine version.</li>
+        <li><a href="/dashboard/errors">Errors</a> — common failures grouped by code, each with a
+            suggested fix.</li>
+        <li><a href="/dashboard/realtime">Live activity</a> — current connections, rooms, lobbies,
+            and the matchmaking queue.</li>
+    </ul>
+
+    <h2>Common causes</h2>
+    <ul>
+        <li><strong>Rejected immediately after connecting</strong> — wrong/inactive public key.</li>
+        <li><strong>Never connects</strong> — wrong URL/port, or the backend isn't running.</li>
+        <li><strong>"room_not_found"</strong> — wrong code, or the room expired while empty.</li>
+        <li><strong>"rate_limited"</strong> — sending too fast; back off (it's retryable).</li>
+    </ul>
+
+    <div class="docs-next">
+        <a href="/dashboard/docs/tutorial-profile">← Player profile</a>
+        <a href="/dashboard/docs/sdk-reference">SDK reference →</a>
+    </div>
+</DocsPage>

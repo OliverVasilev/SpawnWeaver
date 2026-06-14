@@ -1,0 +1,49 @@
+@page "/dashboard/docs/decision-guides"
+
+<div class="page-head"><h2>Choosing a model</h2></div>
+
+<DocsPage Slug="decision-guides">
+    <h1>Choosing a networking model</h1>
+    <p class="lead">Pick the SpawnWeaver features that fit your game — and know what isn't a fit yet.</p>
+
+    <h2>By game type</h2>
+    <table>
+        <thead><tr><th>I'm building…</th><th>Use</th></tr></thead>
+        <tbody>
+            <tr><td>A turn-based game</td><td>Room state + persistence</td></tr>
+            <tr><td>A casual co-op game</td><td>Rooms + entity state + events</td></tr>
+            <tr><td>A lobby/party game</td><td>Lobbies + ready checks + rooms</td></tr>
+            <tr><td>A top-down 1v1 / small arena</td><td>Matchmaking + rooms + entity state (interpolate on the client)</td></tr>
+            <tr><td>A persistent-progression game</td><td>Persistence + rooms</td></tr>
+            <tr><td>A competitive shooter</td><td>Needs dedicated authoritative servers — the relay/state sync isn't enough</td></tr>
+            <tr><td>An MMO</td><td>Not supported yet</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Great for</h2>
+    <ul>
+        <li>Indie &amp; small-team games</li>
+        <li>Lobbies, matchmaking, party games</li>
+        <li>Casual co-op &amp; turn-based</li>
+        <li>Lightweight realtime games (with client-side interpolation)</li>
+        <li>Player profiles, progression, and inventory persistence</li>
+    </ul>
+
+    <h2>Not yet for</h2>
+    <ul>
+        <li>Competitive shooters that need server-authoritative simulation</li>
+        <li>Full MMOs and large-world replication</li>
+        <li>Server-authoritative physics, rollback netcode, lag compensation</li>
+        <li>Advanced anti-cheat, voice chat</li>
+    </ul>
+    <p>
+        State sync v1 is a simple, broadcast-based layer — it keeps players aligned but does not
+        prevent a determined cheat from sending false state. For competitive integrity you need an
+        authoritative server, which is outside SpawnWeaver's current scope.
+    </p>
+
+    <div class="docs-next">
+        <a href="/dashboard/docs/limits">← Limits &amp; pricing</a>
+        <a href="/dashboard/docs">Docs home →</a>
+    </div>
+</DocsPage>

@@ -1,0 +1,46 @@
+# SpawnWeaver — optional PostgreSQL mode.
+# Same single API container, but backed by PostgreSQL instead of SQLite. Use this when a
+# playtest outgrows a single SQLite file (multiple writers, durability, dashboards).
+#
+#   docker compose -f deploy/docker-compose.postgres.yml up --build -d
+#
+# Note: in Postgres mode the schema is created from the EF model on startup
+# (EnsureCreated). Provider-specific migrations can be added later.
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: src/Platform.Api/Dockerfile
+    image: spawnweaver/platform-api:test
+    container_name: spawnweaver-api
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      Database__Provider: postgres
+      ConnectionStrings__Default: "Host=db;Port=5432;Database=spawnweaver;Username=spawnweaver;Password=${POSTGRES_PASSWORD:-spawnweaver}"
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: spawnweaver-db
+    environment:
+      POSTGRES_DB: spawnweaver
+      POSTGRES_USER: spawnweaver
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-spawnweaver}
+    volumes:
+      - spawnweaver-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spawnweaver -d spawnweaver"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  spawnweaver-pgdata:

@@ -1,0 +1,28 @@
+@page "/dashboard/signin"
+
+<div class="auth-wrap">
+    <div class="card auth-card">
+        <div class="section-title">Sign in</div>
+        <p class="muted" style="margin-top:0">Welcome back. Sign in to manage your projects.</p>
+
+        <label class="field-label" for="si-email">Email</label>
+        <input id="si-email" class="field" type="email" placeholder="you@studio.com" autocomplete="email" />
+
+        <label class="field-label" for="si-password">Password</label>
+        <input id="si-password" class="field" type="password" placeholder="Your password" autocomplete="current-password" />
+
+        <button class="btn btn-primary btn-block" type="button" onclick="swSignIn()">Sign in</button>
+        <div id="si-status" class="form-status"></div>
+
+        <div class="auth-divider"><span>or</span></div>
+
+        <button class="btn btn-ghost btn-block" type="button" onclick="swMagicLink('si-email', 'si-magic-status')">
+            Email me a sign-in link (no password)
+        </button>
+        <div id="si-magic-status" class="form-status"></div>
+
+        <p class="muted auth-alt">
+            New here? <a href="/dashboard/signup">Create an account</a>.
+        </p>
+    </div>
+</div>

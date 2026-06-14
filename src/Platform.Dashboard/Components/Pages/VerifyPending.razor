@@ -1,0 +1,47 @@
+@page "/dashboard/verify-pending"
+@using Microsoft.AspNetCore.Components
+@inject NavigationManager Nav
+
+<div class="auth-wrap">
+    <div class="card auth-card">
+        <div class="section-title">@(_expired ? "Link expired" : "Check your inbox")</div>
+
+        @if (_expired)
+        {
+            <p class="muted" style="margin-top:0">
+                That verification link has expired or was already used. Enter your email below and
+                we'll send a fresh one.
+            </p>
+        }
+        else
+        {
+            <p class="muted" style="margin-top:0">
+                We've sent a confirmation link to your email address. Click it to activate your
+                account and sign in. The link expires in 24 hours.
+            </p>
+        }
+
+        <label class="field-label" for="vp-email">Email</label>
+        <input id="vp-email" class="field" type="email" placeholder="you@studio.com" autocomplete="email" />
+
+        <button class="btn btn-primary btn-block" type="button"
+                onclick="swResendVerification(document.getElementById('vp-email').value, document.getElementById('vp-status'))">
+            Resend verification email
+        </button>
+        <div id="vp-status" class="form-status"></div>
+
+        <p class="muted auth-alt">
+            Already verified? <a href="/dashboard/signin">Sign in</a>.
+        </p>
+    </div>
+</div>
+
+@code {
+    private bool _expired;
+
+    protected override void OnInitialized()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        _expired = uri.Query.Contains("expired", StringComparison.OrdinalIgnoreCase);
+    }
+}

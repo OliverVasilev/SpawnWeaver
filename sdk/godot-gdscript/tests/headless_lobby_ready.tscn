@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bswheadlessreadychk"]
+
+[ext_resource type="Script" path="res://tests/headless_lobby_ready.gd" id="1_ready"]
+
+[node name="HeadlessLobbyReady" type="Node"]
+script = ExtResource("1_ready")

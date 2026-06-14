@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bswexstatesync01"]
+
+[ext_resource type="Script" path="res://examples/state_sync/state_sync.gd" id="1_state"]
+
+[node name="StateSync" type="Node2D"]
+script = ExtResource("1_state")

@@ -1,0 +1,47 @@
+## .NET
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+.vs/
+
+## Rider / VS Code
+.idea/
+.vscode/
+
+## Test / coverage
+[Tt]est[Rr]esults/
+*.coverage
+coverage.*.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Local secrets / env
+*.env
+appsettings.*.local.json
+
+## Quickstart local state (generated dev account, server logs)
+.quickstart/
+
+## Generated Godot SDK download package (built at API startup)
+src/Platform.Api/wwwroot/sdk/
+
+## SQLite dev/test databases
+*.db
+*.db-shm
+*.db-wal
+
+## BenchmarkDotNet
+BenchmarkDotNet.Artifacts/
+
+## Godot
+sdk/godot-gdscript/.godot/
+sdk/godot-gdscript/tests/test_config.json
+## Godot editor binary (dropped in locally, not source)
+/Godot_v*.exe
+godot_out.txt
+godot_err.txt

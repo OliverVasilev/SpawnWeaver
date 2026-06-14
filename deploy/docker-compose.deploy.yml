@@ -1,0 +1,72 @@
+# SpawnWeaver — CI/CD deploy stack. Same as docker-compose.prod.yml but the API runs a
+# prebuilt image pulled from a registry (GHCR) instead of building on the server.
+# GitHub Actions sets SPAWNWEAVER_IMAGE and runs `docker compose pull && up -d` over SSH.
+#
+# Manual use on the VPS:
+#   export SPAWNWEAVER_IMAGE=ghcr.io/<owner>/spawnweaver-api:latest
+#   docker compose --env-file deploy/.env -f deploy/docker-compose.deploy.yml pull
+#   docker compose --env-file deploy/.env -f deploy/docker-compose.deploy.yml up -d
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: spawnweaver-caddy
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in deploy/.env}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in deploy/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    restart: unless-stopped
+
+  api:
+    image: ${SPAWNWEAVER_IMAGE:?set SPAWNWEAVER_IMAGE to the registry image}
+    container_name: spawnweaver-api
+    depends_on:
+      db:
+        condition: service_healthy
+    # No host port: only Caddy talks to the API, over the internal network.
+    expose:
+      - "8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      Database__Provider: postgres
+      ConnectionStrings__Default: "Host=db;Port=5432;Database=spawnweaver;Username=spawnweaver;Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}"
+      App__PublicBaseUrl: "https://${DOMAIN}"
+      Email__Provider: resend
+      Email__Resend__ApiKey: ${EMAIL__RESEND__APIKEY:-}
+      Email__FromAddress: ${EMAIL__FROMADDRESS:-onboarding@resend.dev}
+      Email__FromName: ${EMAIL__FROMNAME:-SpawnWeaver}
+      Realtime__MaxMessageBytes: "16384"
+      Realtime__MaxMessagesPerSecond: "20"
+      Realtime__MessageBurst: "40"
+      Realtime__EmptyRoomTtl: "00:01:00"
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: spawnweaver-db
+    environment:
+      POSTGRES_DB: spawnweaver
+      POSTGRES_USER: spawnweaver
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - spawnweaver-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spawnweaver -d spawnweaver"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  spawnweaver-pgdata:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,99 @@
+@page "/dashboard"
+@using Platform.Application.Projects
+@using Platform.Realtime.Diagnostics
+@inject RealtimeDiagnostics Diagnostics
+@inject RealtimeMetrics Metrics
+@inject ProjectService Projects
+@inject DashboardUser User
+
+<div class="page-head">
+    <h2>Welcome@(string.IsNullOrEmpty(User.DisplayName) ? "" : ", " + User.DisplayName) 👋</h2>
+    <span class="badge badge-green"><span class="dot dot-online"></span>online</span>
+</div>
+
+@if (_projects.Count == 0)
+{
+    <div class="card welcome-card">
+        <div class="section-title" style="margin-top:0">Create your first project</div>
+        <p>
+            A project gives you the keys your Godot game uses to connect. The guided setup
+            takes about a minute and recommends what to enable for your game type.
+        </p>
+        <div class="cta-row">
+            <a class="btn btn-primary" href="/dashboard/onboarding">Create a project →</a>
+            <a class="btn btn-secondary" href="/dashboard/getting-started">How it works</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="stat-grid">
+        <div class="card stat">
+            <div class="value cyan">@Diagnostics.ActiveConnections</div>
+            <div class="label">Active connections</div>
+        </div>
+        <div class="card stat">
+            <div class="value violet">@Diagnostics.ActiveRooms</div>
+            <div class="label">Active rooms</div>
+        </div>
+        <div class="card stat">
+            <div class="value violet">@Diagnostics.ActiveLobbies</div>
+            <div class="label">Active lobbies</div>
+        </div>
+        <div class="card stat">
+            <div class="value cyan">@Diagnostics.MatchmakingWaiting</div>
+            <div class="label">Matchmaking queue</div>
+        </div>
+        <div class="card stat">
+            <div class="value @(_errors > 0 ? "" : "green")">@_errors</div>
+            <div class="label"><a href="/dashboard/errors">Errors</a></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title" style="margin-top:0">
+            Your projects (@_projects.Count)
+            <a class="btn btn-primary btn-sm" href="/dashboard/onboarding" style="float:right">New project</a>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Name</th><th>Game type</th><th>Public key</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in _projects)
+                {
+                    <tr>
+                        <td>@p.Name</td>
+                        <td class="muted">@(p.GameType == Platform.Domain.Accounts.GameType.Unspecified ? "—" : p.GameType.ToString())</td>
+                        <td class="mono">@p.PublicKey</td>
+                        <td>
+                            @if (p.IsActive)
+                            {
+                                <span class="badge badge-green">active</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-dim">inactive</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<Platform.Domain.Projects.Project> _projects = [];
+    private long _errors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _errors = Metrics.GetSnapshot().Errors;
+
+        var org = await User.GetOrganizationAsync();
+        _projects = org is not null
+            ? await Projects.ListByOrganizationAsync(org.Id)
+            : await Projects.ListAsync(100);
+    }
+}

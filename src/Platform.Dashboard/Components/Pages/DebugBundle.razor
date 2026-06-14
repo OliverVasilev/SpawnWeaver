@@ -1,0 +1,22 @@
+@page "/dashboard/debug"
+
+<div class="page-head">
+    <h2>Debug Bundle Viewer</h2>
+</div>
+
+<div class="card">
+    <p class="muted" style="margin-top:0">
+        Paste a report from the Godot SDK's
+        <code>MultiplayerService.create_debug_report_string()</code> to inspect a player's
+        connection state, recent messages, errors, and latency — no server access needed.
+    </p>
+    <textarea id="db-input" class="field" rows="7"
+              placeholder='{ "sdk_version": "0.2.0", "player_id": "player_…", "recent_messages": [ … ] }'></textarea>
+    <div style="margin-top:12px">
+        <button class="btn btn-primary" type="button" onclick="swViewDebugBundle()">View report</button>
+        <button class="btn btn-ghost" type="button" onclick="swClearDebugBundle()">Clear</button>
+        <span id="db-status"></span>
+    </div>
+</div>
+
+<div id="db-result" class="hidden"></div>

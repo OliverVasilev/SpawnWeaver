@@ -1,0 +1,25 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/*.user
+.git/
+.gitignore
+.config/
+# Exclude the SDK except the addon itself, which is bundled into the image so the API can
+# serve it for the one-line installer (/install.ps1, /install.sh).
+sdk/godot-gdscript/.godot/
+sdk/godot-gdscript/examples/
+sdk/godot-gdscript/tests/
+sdk/godot-gdscript/spawnweaver/
+sdk/godot-csharp-later/
+samples/
+tools/
+deploy/
+docs/
+**/*.md
+**/*.db
+**/*.db-shm
+**/*.db-wal
+Godot_v*.exe
+*.txt

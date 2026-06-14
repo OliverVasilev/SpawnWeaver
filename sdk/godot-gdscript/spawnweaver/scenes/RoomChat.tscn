@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://6e1bkx60gqiu"]
+
+[ext_resource type="Script" uid="uid://ciu7ldkkxfy8q" path="res://spawnweaver/scripts/RoomChat.gd" id="1"]
+
+[node name="RoomChat" type="Control" unique_id=933350276]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")

@@ -1,0 +1,60 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+@inject DashboardUser User
+
+<div class="app-shell">
+    <div class="topbar">
+        <a class="logo" href="/">
+            <span class="brand-gradient">SpawnWeaver</span> <span class="dim">dashboard</span>
+        </a>
+        <nav class="nav">
+            @if (User.IsAuthenticated)
+            {
+                <a href="/dashboard" class="@ActiveClass("/dashboard")">Home</a>
+                <a href="/dashboard/projects" class="@ActiveClass("/dashboard/projects")">Projects</a>
+                <a href="/dashboard/debugger" class="@(DebuggerActive ? "active" : "")">Debugger</a>
+                <a href="/dashboard/docs" class="@(DocsActive ? "active" : "")">Docs</a>
+            }
+            else
+            {
+                <a href="/dashboard/getting-started" class="@ActiveClass("/dashboard/getting-started")">Getting started</a>
+                <a href="/dashboard/docs" class="@(DocsActive ? "active" : "")">Docs</a>
+            }
+        </nav>
+        <div class="nav-account">
+            @if (User.IsAuthenticated)
+            {
+                <a href="/dashboard/account" class="@ActiveClass("/dashboard/account")">@User.DisplayName</a>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="swSignOut()">Sign out</button>
+            }
+            else
+            {
+                <a href="/dashboard/signin" class="@ActiveClass("/dashboard/signin")">Sign in</a>
+                <a href="/dashboard/signup" class="btn btn-primary btn-sm">Sign up</a>
+            }
+        </div>
+    </div>
+
+    @Body
+</div>
+
+@code {
+    private static readonly string[] DebuggerPaths =
+    {
+        "/dashboard/debugger", "/dashboard/realtime", "/dashboard/sessions",
+        "/dashboard/errors", "/dashboard/debug", "/dashboard/logs",
+    };
+
+    private string CurrentPath => new Uri(Nav.Uri).AbsolutePath.TrimEnd('/');
+
+    private bool DebuggerActive =>
+        DebuggerPaths.Any(p => CurrentPath.Equals(p, StringComparison.OrdinalIgnoreCase)
+            || CurrentPath.StartsWith(p + "/", StringComparison.OrdinalIgnoreCase));
+
+    private bool DocsActive =>
+        CurrentPath.Equals("/dashboard/docs", StringComparison.OrdinalIgnoreCase)
+            || CurrentPath.StartsWith("/dashboard/docs/", StringComparison.OrdinalIgnoreCase);
+
+    private string ActiveClass(string path)
+        => string.Equals(CurrentPath, path.TrimEnd('/'), StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}

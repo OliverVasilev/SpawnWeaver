@@ -1,0 +1,10 @@
+# SpawnWeaver reverse proxy. Caddy obtains and renews Let's Encrypt TLS automatically and
+# proxies everything (HTTP + WebSocket upgrades) to the API container on the internal network.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy api:8080
+}

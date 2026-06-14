@@ -1,0 +1,51 @@
+@page "/dashboard/errors"
+@using Platform.Contracts.Admin
+@using Platform.Realtime.Diagnostics
+@inject RealtimeDiagnostics Diagnostics
+
+<div class="page-head">
+    <h2>Error Explorer</h2>
+    <span class="badge badge-dim">@_errors.Count code(s)</span>
+</div>
+
+<div class="card">
+    <p class="muted" style="margin-top:0">
+        Aggregated protocol errors since startup — what failed, how often, and how to fix it.
+    </p>
+    @if (_errors.Count == 0)
+    {
+        <div class="empty">No errors recorded yet. 🎉</div>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Error</th><th>Count</th><th>Sessions</th><th>Last seen (UTC)</th><th>Suggested fix</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var e in _errors)
+                {
+                    <tr>
+                        <td>
+                            <span class="badge badge-red">@e.Code</span>
+                            <div class="muted" style="margin-top:4px">@e.LastMessage</div>
+                        </td>
+                        <td><strong>@e.Count</strong></td>
+                        <td>@e.AffectedSessions</td>
+                        <td class="muted">@e.LastOccurrenceUtc.ToString("u")</td>
+                        <td>@e.SuggestedFix</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<ErrorBucket> _errors = [];
+
+    protected override void OnInitialized()
+    {
+        _errors = Diagnostics.GetErrors();
+    }
+}

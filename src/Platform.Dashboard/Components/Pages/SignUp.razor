@@ -1,0 +1,34 @@
+@page "/dashboard/signup"
+
+<div class="auth-wrap">
+    <div class="card auth-card">
+        <div class="section-title">Create your account</div>
+        <p class="muted" style="margin-top:0">
+            Free to start. You'll get a personal workspace and can create your first project right away.
+        </p>
+
+        <label class="field-label" for="su-email">Email</label>
+        <input id="su-email" class="field" type="email" placeholder="you@studio.com" autocomplete="email" />
+
+        <button class="btn btn-primary btn-block" type="button" onclick="swMagicLink('su-email', 'su-magic-status')">
+            Email me a sign-up link
+        </button>
+        <div id="su-magic-status" class="form-status"></div>
+        <p class="muted" style="font-size:12.5px;margin:2px 0 0">No password needed — we'll email you a one-click link.</p>
+
+        <div class="auth-divider"><span>or use a password</span></div>
+
+        <label class="field-label" for="su-name">Display name</label>
+        <input id="su-name" class="field" type="text" placeholder="Jane Dev" autocomplete="name" />
+
+        <label class="field-label" for="su-password">Password</label>
+        <input id="su-password" class="field" type="password" placeholder="At least 8 characters" autocomplete="new-password" />
+
+        <button class="btn btn-ghost btn-block" type="button" onclick="swSignUp()">Create account with password</button>
+        <div id="su-status" class="form-status"></div>
+
+        <p class="muted auth-alt">
+            Already have an account? <a href="/dashboard/signin">Sign in</a>.
+        </p>
+    </div>
+</div>

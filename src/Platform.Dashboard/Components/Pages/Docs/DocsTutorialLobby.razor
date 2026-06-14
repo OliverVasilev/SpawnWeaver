@@ -1,0 +1,45 @@
+@page "/dashboard/docs/tutorial-lobby"
+
+<div class="page-head"><h2>Tutorial</h2></div>
+
+<DocsPage Slug="tutorial-lobby">
+    <h1>Build a lobby with a ready check</h1>
+    <p class="lead">A waiting room where players ready up and the host starts the game.</p>
+
+    <h2>1. Create or join a lobby</h2>
+    <pre># Host:
+MultiplayerService.create_lobby("My Lobby", "public", 8, {}, "Alice")
+MultiplayerService.lobby_created.connect(func(lobby): print("code: ", lobby.code))
+
+# Others — list public lobbies, then join by code:
+MultiplayerService.list_lobbies()
+MultiplayerService.join_lobby("ABC123", "Bob")</pre>
+
+    <h2>2. Track the roster</h2>
+    <p>A lobby is a room, so the same join/leave signals apply.</p>
+    <pre>MultiplayerService.player_joined.connect(func(_room, player): add_player(player))
+MultiplayerService.player_left.connect(func(_room, player_id): remove_player(player_id))</pre>
+
+    <h2>3. Ready up (via room events)</h2>
+    <p>Broadcast each player's ready state with an event; everyone tracks it.</p>
+    <pre>func toggle_ready(is_ready: bool) -> void:
+    MultiplayerService.send_event("ready", { "ready": is_ready })
+
+MultiplayerService.event_received.connect(func(ev, data, from):
+    if ev == "ready": ready_by_id[from] = data.ready)</pre>
+    <p>When a new player joins, re-announce your ready state so they're caught up.</p>
+
+    <h2>4. Host starts the game</h2>
+    <pre># Only the host shows this; enable when everyone is ready:
+MultiplayerService.send_event("start", {})
+MultiplayerService.event_received.connect(func(ev, _d, _f):
+    if ev == "start": start_game())</pre>
+
+    <p>Full version: the <strong>Lobby + Ready Check</strong> example in
+        <code>sdk/godot-gdscript/examples/lobby_ready/</code>.</p>
+
+    <div class="docs-next">
+        <a href="/dashboard/docs/tutorial-online">← Chat room</a>
+        <a href="/dashboard/docs/tutorial-matchmaking">Add matchmaking →</a>
+    </div>
+</DocsPage>

@@ -1,0 +1,63 @@
+@page "/dashboard/docs/concepts"
+
+<div class="page-head"><h2>Core concepts</h2></div>
+
+<DocsPage Slug="concepts">
+    <h1>Core concepts</h1>
+    <p class="lead">The handful of ideas behind everything in SpawnWeaver.</p>
+
+    <h3>Project</h3>
+    <p>A registered game. It owns a public key (shipped in your client) and a secret key
+        (server-side). All realtime connections authenticate with the public key.</p>
+
+    <h3>Player &amp; session</h3>
+    <p>Connecting mints a stable <strong>player</strong> identity and a reconnect token, so a player
+        keeps the same id across reconnects. A <strong>session</strong> is one live connection
+        (one WebSocket), visible in the dashboard with its own timeline.</p>
+
+    <h3>Room</h3>
+    <p>A group of connected players. Players create a room (getting a short code) and others join
+        by code. Members are notified of joins and leaves.</p>
+
+    <h3>Lobby</h3>
+    <p>A room with developer attributes: a name, visibility (public lobbies are listed), a max-player
+        cap, and metadata. Use lobbies for pre-game waiting rooms and ready checks.</p>
+
+    <h3>Matchmaking queue</h3>
+    <p>Players enter a queue by game mode + region + match size. When a bucket fills, the server
+        creates a room and notifies the matched players.</p>
+
+    <h3>Event relay</h3>
+    <p>Send a game event to a room and the server relays it to the other members. Events are
+        fire-and-forget — great for inputs, chat, and actions.</p>
+
+    <h3>Room state vs entity state</h3>
+    <p>State sync keeps connected players <em>aligned right now</em>:</p>
+    <ul>
+        <li><strong>Room state</strong> — a shared key-value map for the whole room (phase, round, timer).
+            Only the room host may change it.</li>
+        <li><strong>Entity state</strong> — per-entity key-value state owned by its creator (a player's
+            position, hp). Only the owner may change or delete it.</li>
+    </ul>
+    <p>A player who joins late receives a full <strong>snapshot</strong> of the current room + entity
+        state, so they don't miss what happened before they arrived.</p>
+
+    <h3>Persistence vs state sync</h3>
+    <p>These solve different problems:</p>
+    <ul>
+        <li><strong>State sync</strong> is live and in-memory — it disappears when the room ends.
+            Use it for positions, scores, and phases <em>during</em> a session.</li>
+        <li><strong>Persistence</strong> is durable key-value storage that outlives sessions.
+            Use it for profiles, progression, and inventory <em>between</em> sessions.</li>
+    </ul>
+
+    <h3>Debugging</h3>
+    <p>Every session has a timeline, errors are aggregated with suggested fixes, and the SDK can
+        produce a copyable debug report. See <a href="/dashboard/docs/tutorial-debug">Debug a
+        failed connection</a>.</p>
+
+    <div class="docs-next">
+        <a href="/dashboard/docs/getting-started">← Quickstart</a>
+        <a href="/dashboard/docs/tutorial-online">Tutorials →</a>
+    </div>
+</DocsPage>

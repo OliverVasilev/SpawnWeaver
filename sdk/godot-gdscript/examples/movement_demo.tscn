@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bswmovementdemo1"]
+
+[ext_resource type="Script" path="res://examples/movement_demo.gd" id="1_move"]
+
+[node name="MovementDemo" type="Node2D"]
+script = ExtResource("1_move")

@@ -1,0 +1,20 @@
+# SpawnWeaver — local developer mode (Mode A).
+# Milestone 1: just the API. Database, realtime gateway, etc. arrive in later milestones.
+#
+# Usage (from repo root):
+#   docker compose -f deploy/docker-compose.yml up --build
+#   curl http://localhost:8080/health
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: src/Platform.Api/Dockerfile
+    image: spawnweaver/platform-api:dev
+    container_name: spawnweaver-api
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    restart: unless-stopped

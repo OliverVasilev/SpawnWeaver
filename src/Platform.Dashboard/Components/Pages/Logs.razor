@@ -1,0 +1,64 @@
+@page "/dashboard/logs"
+@using Platform.Infrastructure.Observability
+@inject RecentLogStore LogStore
+
+<div class="page-head">
+    <h2>Logs</h2>
+    <nav class="nav">
+        <a href="/dashboard/logs" class="@(string.IsNullOrEmpty(Level) ? "active" : "")">All</a>
+        <a href="/dashboard/logs?level=Warning" class="@(Level == "Warning" ? "active" : "")">Warnings</a>
+        <a href="/dashboard/logs?level=Error" class="@(Level == "Error" ? "active" : "")">Errors</a>
+    </nav>
+</div>
+
+<div class="card">
+    @if (_records.Count == 0)
+    {
+        <div class="empty">No log records@(string.IsNullOrEmpty(Level) ? "" : $" at level {Level}").</div>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Time</th><th>Level</th><th>Category</th><th>Message</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var r in _records)
+                {
+                    <tr>
+                        <td class="muted">@r.TimestampUtc.ToString("HH:mm:ss")</td>
+                        <td><span class="badge @BadgeClass(r.Level)">@r.Level</span></td>
+                        <td class="mono">@Shorten(r.Category)</td>
+                        <td>@r.Message</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Level { get; set; }
+
+    private IReadOnlyList<LogRecord> _records = [];
+
+    protected override void OnParametersSet()
+    {
+        _records = LogStore.GetRecent(Level, 200);
+    }
+
+    private static string BadgeClass(string level) => level switch
+    {
+        "Error" or "Critical" => "badge-red",
+        "Warning" => "badge-amber",
+        "Information" => "badge-cyan",
+        _ => "badge-dim",
+    };
+
+    private static string Shorten(string category)
+    {
+        var lastDot = category.LastIndexOf('.');
+        return lastDot >= 0 && lastDot < category.Length - 1 ? category[(lastDot + 1)..] : category;
+    }
+}

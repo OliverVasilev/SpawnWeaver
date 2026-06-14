@@ -1,0 +1,90 @@
+@page "/dashboard/sessions/{ConnectionId}"
+@using Platform.Contracts.Admin
+@using Platform.Realtime.Diagnostics
+@using SessionDetailDto = Platform.Contracts.Admin.SessionDetail
+@inject RealtimeDiagnostics Diagnostics
+
+<div class="page-head">
+    <h2>Session Inspector</h2>
+    <a class="btn btn-ghost btn-sm" href="/dashboard/sessions">← All sessions</a>
+</div>
+
+@if (_session is null)
+{
+    <div class="card">
+        <div class="empty">
+            No diagnostics for connection <span class="mono">@ConnectionId</span>.
+            It may have predated the debugger or aged out of the buffer.
+        </div>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="section-title">Connection</div>
+        <div class="kv">
+            <div class="kv-label">Connection ID</div><div class="mono">@_session.ConnectionId</div>
+            <div class="kv-label">Player ID</div><div class="mono">@_session.PlayerId</div>
+            <div class="kv-label">Project</div><div class="mono">@_session.ProjectId</div>
+            <div class="kv-label">Auth status</div><div>@_session.AuthStatus</div>
+            <div class="kv-label">Status</div>
+            <div>
+                @if (_session.EndedAtUtc is null)
+                {
+                    <span class="badge badge-green"><span class="dot dot-online"></span>active</span>
+                }
+                else
+                {
+                    <span class="badge badge-dim">ended @_session.EndedAtUtc.Value.ToString("HH:mm:ss")</span>
+                }
+            </div>
+            <div class="kv-label">Current room</div><div class="mono">@(_session.CurrentRoomId ?? "—")</div>
+            <div class="kv-label">IP / region</div><div class="mono">@(_session.IpAddress ?? "—")</div>
+            <div class="kv-label">SDK version</div><div>@(_session.SdkVersion ?? "—")</div>
+            <div class="kv-label">Engine</div><div>@(_session.Engine ?? "—")</div>
+            <div class="kv-label">Connected (UTC)</div><div class="muted">@_session.StartedAtUtc.ToString("u")</div>
+            <div class="kv-label">Last activity (UTC)</div><div class="muted">@_session.LastActivityAtUtc.ToString("u")</div>
+            <div class="kv-label">Disconnect reason</div><div>@(_session.DisconnectReason ?? "—")</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Timeline (@_session.Timeline.Count)</div>
+        @if (_session.Timeline.Count == 0)
+        {
+            <div class="empty">No events recorded.</div>
+        }
+        else
+        {
+            <ul class="timeline">
+                @foreach (var e in _session.Timeline)
+                {
+                    <li class="timeline-row @KindClass(e.Kind)">
+                        <span class="timeline-time mono">@e.TimestampUtc.ToString("HH:mm:ss.fff")</span>
+                        <span class="timeline-kind">@e.Kind</span>
+                        <span class="timeline-detail">@e.Detail</span>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string ConnectionId { get; set; } = "";
+
+    private SessionDetailDto? _session;
+
+    protected override void OnInitialized()
+    {
+        _session = Diagnostics.GetSessionDetail(ConnectionId);
+    }
+
+    private static string KindClass(string kind) => kind switch
+    {
+        "rejected" => "timeline-error",
+        "connected" or "authenticated" => "timeline-good",
+        "disconnected" => "timeline-dim",
+        _ => "",
+    };
+}
