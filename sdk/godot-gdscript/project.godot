@@ -16,11 +16,11 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="SpawnWeaver Godot SDK"
 run/main_scene="res://examples/basic_lobby.tscn"
-config/features=PackedStringArray("4.6")
+config/features=PackedStringArray("4.2")
 
 [autoload]
 
-MultiplayerService="*uid://p37b5tq1sa5i"
+MultiplayerService="*res://addons/multiplayer_service/multiplayer_service.gd"
 
 [editor_plugins]
 

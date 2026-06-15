@@ -60,7 +60,7 @@ func _draw() -> void:
 	for pid in _players:
 		var p: Dictionary = _players[pid]
 		var pos: Vector2 = p.get("pos", Vector2.ZERO)
-		var is_me := pid == _my_id
+		var is_me: bool = pid == _my_id
 		draw_circle(pos, 16.0, Color(0.2, 0.75, 1.0) if is_me else Color(1.0, 0.55, 0.25))
 		var label := str(p.get("name", "Player"))
 		draw_string(ThemeDB.fallback_font, pos + Vector2(-20, -22), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13)
