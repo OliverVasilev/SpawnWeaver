@@ -6,63 +6,91 @@
     <h1>Build a 3D multiplayer arena shooter</h1>
     <p class="lead">
         A third-person arena where players drive around and shoot each other with hitscan weapons.
-        Same SpawnWeaver toolkit as the 2D tutorial — matchmaking, entity-state sync, the event
-        relay, snapshots, damage and respawns — applied in 3D, with the whole scene built in code.
+        Same toolkit as the 2D tutorial — matchmaking, the <a href="/dashboard/docs/sync-nodes">SpawnSync</a>
+        node for movement, the event relay for shots, and per-player health — applied in 3D, with the
+        whole scene built in code.
     </p>
 
     <p style="margin:10px 0">
         <span class="badge badge-cyan">Matchmaking</span>
-        <span class="badge badge-cyan">Entity state sync</span>
+        <span class="badge badge-cyan">SpawnSync</span>
         <span class="badge badge-cyan">Realtime events</span>
-        <span class="badge badge-cyan">Snapshots</span>
-        <span class="badge badge-green">Hitscan · respawn · score</span>
+        <span class="badge badge-green">Hitscan · damage · respawn</span>
     </p>
 
     <div class="banner banner-warn">
         <span>📋</span>
-        <span>New here? Start with the <a href="/dashboard/docs/getting-started">Quickstart</a> and
-            save your public key + server URL in the <strong>SpawnWeaver dock</strong>. The
-            <a href="/dashboard/docs/tutorial-2d-shooter">2D shooter</a> explains the networking model
-            in more detail — this page assumes you've seen it.</span>
-    </div>
-
-    <div class="banner" style="border-color:var(--border);color:var(--steel)">
-        <span>💡</span>
-        <span>For movement with no networking code, the
-            <a href="/dashboard/docs/sync-nodes">SpawnSync drop-in node</a> replicates transforms with
-            interpolation. This tutorial does it by hand to show the underlying API.</span>
+        <span>New here? Start with the <a href="/dashboard/docs/getting-started">Quickstart</a> and save
+            your public key in the <strong>SpawnWeaver dock</strong>. The
+            <a href="/dashboard/docs/tutorial-2d-shooter">2D shooter</a> explains the model in a bit more
+            detail — this page mirrors it in 3D.</span>
     </div>
 
     <h2>How it works</h2>
     <ul>
-        <li><strong>One entity per player</strong> holds <code>x, z, yaw, hp, kills, name</code>.
-            Movement patches it; remote players are drawn as capsules updated from that state.</li>
-        <li><strong>Hitscan shots are events.</strong> Firing sends a <code>shoot</code> event with a
-            ray (origin + direction). Each client tests the ray against <em>its own</em> player and,
-            if hit, lowers its own <code>hp</code> — the same victim-authoritative model as the 2D
-            version, so there are no bullets to simulate.</li>
-        <li><strong>Tank controls</strong> (turn + drive) keep input simple with Godot's default
-            keys — no mouse capture needed.</li>
+        <li><strong>SpawnSync owns movement.</strong> Each player is a small scene (a capsule) with a
+            <strong>SpawnSync</strong> child. On the copy you control it streams your position, rotation,
+            and <code>hp</code>; on other players it interpolates the capsule toward their updates. No
+            <code>patch_entity_state</code>, no interpolation code.</li>
+        <li><strong>Hitscan shots are events.</strong> Firing sends a <code>shoot</code> event with a ray
+            (origin + direction). Everyone draws a tracer; each client tests the ray against <em>its own</em>
+            player and, if hit, lowers its own <code>hp</code> (which replicates via SpawnSync). No bullets
+            to simulate.</li>
+        <li><strong>Tank controls</strong> (Left/Right turn, Up/Down drive, Space shoot) — keyboard only,
+            no mouse capture.</li>
     </ul>
 
-    <h2>1. Create the scene</h2>
-    <p>Add a <strong>Node3D</strong> scene, attach a script, and save it (e.g.
-        <code>arena_3d.tscn</code>). The script builds the camera, light, ground, player capsules and
-        a HUD itself. Everything below is <strong>one script</strong>, pasted in order.</p>
-
-    <h2>2. Constants &amp; state</h2>
+    <h2>1. The player scene</h2>
+    <p>Make a <strong>Node3D</strong> scene saved as <code>player.tscn</code> and attach this script — it
+        just builds the capsule + a barrel that shows facing. SpawnSync does the networking.</p>
     <pre>extends Node3D
-## SpawnWeaver tutorial — 3D arena shooter (hitscan, free-for-all).
+## A 3D player avatar. The SpawnSync child streams position, rotation, and hp.
+
+var color := Color.WHITE
+var hp: int = 100
+
+func _ready() -> void:
+    var mat := StandardMaterial3D.new()
+    mat.albedo_color = color
+
+    var body := MeshInstance3D.new()
+    var capsule := CapsuleMesh.new()
+    capsule.radius = 0.5
+    capsule.height = 2.0
+    body.mesh = capsule
+    body.position = Vector3(0, 1.0, 0)        # stand it on the ground
+    body.material_override = mat
+    add_child(body)
+
+    var barrel := MeshInstance3D.new()        # points +Z so you can see which way it faces
+    var box := BoxMesh.new()
+    box.size = Vector3(0.2, 0.2, 1.2)
+    barrel.mesh = box
+    barrel.position = Vector3(0, 1.0, 0.8)
+    barrel.material_override = mat
+    add_child(barrel)</pre>
+    <p>Then add the networking with one node: select the root, <em>Add Child Node</em> →
+        <strong>SpawnSync</strong>, and in its Inspector set <em>Sync position</em> + <em>Sync rotation</em>
+        on, <em>Synced properties</em> = <code>hp</code>, and <em>Send rate</em> = <code>12</code> (headroom
+        under the rate limit so shoot events get through). Save the scene.</p>
+
+    <h2>2. The arena scene</h2>
+    <p>Make a <strong>Node3D</strong> scene saved as <code>arena_3d.tscn</code>, set it as the main scene,
+        attach a new script, and paste each part in order.</p>
+
+    <h3>2a. Constants &amp; state</h3>
+    <pre>extends Node3D
+## 3D arena shooter (hitscan, free-for-all). Movement/hp via SpawnSync; shots via the event relay.
 
 const GAME_MODE := "arena3d_ffa"
 const MOVE_SPEED := 7.0
 const TURN_SPEED := 2.6
 const FIRE_COOLDOWN := 0.30
-const SEND_INTERVAL := 0.06
 const MAX_HP := 100
 const HIT_DAMAGE := 34
 const HIT_RADIUS := 1.2
 const ARENA_HALF := 28.0
+const PlayerScene := preload("res://player.tscn")
 
 var _status: Label
 var _hud: Label
@@ -71,30 +99,12 @@ var _camera: Camera3D
 
 var _in_match := false
 var _respawning := false
-var _my_id := ""
-var _my_pos := Vector3.ZERO
-var _my_yaw := 0.0
 var _fire_cd := 0.0
-var _send_accum := 0.0
-var _players: Dictionary = {}    # id -> { pos, yaw, hp, kills, name }
-var _meshes: Dictionary = {}     # id -> MeshInstance3D</pre>
+var _me: Node3D = null
+var _remotes: Dictionary = {}     # entity_id -> player Node3D</pre>
 
-    <h2>3. Build the world &amp; subscribe to signals</h2>
-    <pre>func _ready() -> void:
-    _build_world()
-    _build_ui()
-    MultiplayerService.welcomed.connect(func(_id): _set_status("Connected. Click Find Match."))
-    MultiplayerService.connection_error.connect(func(r): _set_status("Connection error: " + r))
-    MultiplayerService.matchmaking_queued.connect(func(_m, _r, _s): _set_status("Searching for players…"))
-    MultiplayerService.match_found.connect(_on_match_found)
-    MultiplayerService.matchmaking_timeout.connect(func(_m, _r): _on_match_over("No match found — try again."))
-    MultiplayerService.state_snapshot_received.connect(_on_snapshot)
-    MultiplayerService.entity_state_changed.connect(_on_entity_changed)
-    MultiplayerService.entity_state_deleted.connect(_remove_player)
-    MultiplayerService.player_left.connect(func(_r, pid): _remove_player(pid))
-    MultiplayerService.event_received.connect(_on_event)
-
-func _build_world() -> void:
+    <h3>2b. Build the world</h3>
+    <pre>func _build_world() -> void:
     var light := DirectionalLight3D.new()
     light.rotation_degrees = Vector3(-55, -40, 0)
     add_child(light)
@@ -122,186 +132,144 @@ func _build_world() -> void:
     _camera.look_at(Vector3.ZERO, Vector3.UP)
     add_child(_camera)</pre>
 
-    <h2>4. Find a match &amp; spawn your player</h2>
+    <h3>2c. Connect &amp; subscribe</h3>
+    <pre>func _ready() -> void:
+    _build_world()
+    _build_ui()
+    MultiplayerService.welcomed.connect(func(_id): _set_status("Connected. Click Find Match."))
+    MultiplayerService.connection_error.connect(func(r): _set_status("Connection error: " + r))
+    MultiplayerService.matchmaking_queued.connect(func(_m, _r, _s): _set_status("Searching for players…"))
+    MultiplayerService.match_found.connect(_on_match_found)
+    MultiplayerService.matchmaking_timeout.connect(func(_m, _r): _on_match_over("No match found — try again."))
+    MultiplayerService.state_snapshot_received.connect(_on_snapshot)
+    MultiplayerService.entity_state_changed.connect(func(id, _p, full): _ensure_remote(id, full))
+    MultiplayerService.player_left.connect(func(_r, pid): _remove_remote(pid))
+    MultiplayerService.event_received.connect(_on_event)</pre>
+
+    <h3>2d. Spawn your player + a capsule per remote</h3>
     <pre>func _on_match_found(_room_id: String, room_code: String, _list: Array) -> void:
     _in_match = true
     _respawning = false
-    _my_id = MultiplayerService.player_id
-    _my_pos = _random_spawn()
-    _my_yaw = 0.0
-    _ensure_mesh(_my_id, Color(0.96, 0.70, 0.36))
-    MultiplayerService.set_entity_state(_my_id, {
-        "x": _my_pos.x, "z": _my_pos.z, "yaw": 0.0,
-        "hp": MAX_HP, "kills": 0, "name": _my_name(),
-    })
+    _spawn_local()
     _find_btn.disabled = true
     _update_hud()
-    _set_status("Match %s! Left/Right turn · Up/Down move · Space shoots." % room_code)</pre>
+    _set_status("Match %s! Left/Right turn · Up/Down move · Space shoots." % room_code)
 
-    <h2>5. Drive, aim &amp; sync</h2>
-    <p>Tank controls: turn with Left/Right, drive with Up/Down. Facing is the yaw angle; we patch our
-        entity a few times a second and keep the camera behind us.</p>
+func _spawn_local() -> void:
+    if _me != null:
+        return
+    _me = PlayerScene.instantiate()
+    _me.color = Color(0.96, 0.70, 0.36)
+    _me.position = _random_spawn()
+    _me.get_node("SpawnSync").local = true   # SpawnSync registers + streams my transform and hp
+    add_child(_me)
+
+func _ensure_remote(id: String, state: Dictionary) -> void:
+    if id == MultiplayerService.player_id or _remotes.has(id):
+        return
+    var p := PlayerScene.instantiate()
+    p.color = Color(0.91, 0.44, 0.29)
+    if state.has("x") and state.has("z"):    # start where the entity already is
+        p.position = Vector3(float(state["x"]), 0.0, float(state["z"]))
+    if state.has("hp"):
+        p.hp = int(state["hp"])
+    p.get_node("SpawnSync").entity_id = id   # remote: interpolate this capsule; auto-free on leave
+    add_child(p)
+    _remotes[id] = p
+
+func _remove_remote(id: String) -> void:
+    var p = _remotes.get(id, null)
+    if p != null and is_instance_valid(p):
+        p.queue_free()
+    _remotes.erase(id)
+
+func _on_snapshot(snapshot: Dictionary) -> void:
+    for e in snapshot.get("entities", []):
+        _ensure_remote(str(e.get("entityId", "")), e.get("state", {}))</pre>
+
+    <h3>2e. Drive your player — only when this window is focused</h3>
+    <p>You drive only <code>_me</code>; SpawnSync streams it. The <strong>focus guard</strong> means only
+        the window you've clicked controls its player — handy when you run two instances on one PC to test.</p>
     <pre>func _process(delta: float) -> void:
-    if not _in_match:
+    if not _in_match or _me == null:
         return
     _fire_cd = maxf(0.0, _fire_cd - delta)
-    if not _respawning:
+    if not _respawning and get_window().has_focus():
         _handle_input(delta)
     _update_camera()
 
 func _handle_input(delta: float) -> void:
     if Input.is_action_pressed("ui_left"):
-        _my_yaw += TURN_SPEED * delta
+        _me.rotation.y += TURN_SPEED * delta
     if Input.is_action_pressed("ui_right"):
-        _my_yaw -= TURN_SPEED * delta
-    var fwd := Vector3(sin(_my_yaw), 0.0, cos(_my_yaw))
-    var drive := 0.0
+        _me.rotation.y -= TURN_SPEED * delta
+    var fwd := Vector3(sin(_me.rotation.y), 0.0, cos(_me.rotation.y))
     if Input.is_action_pressed("ui_up"):
-        drive += 1.0
+        _me.position += fwd * MOVE_SPEED * delta
     if Input.is_action_pressed("ui_down"):
-        drive -= 1.0
-    _my_pos += fwd * drive * MOVE_SPEED * delta
-    _my_pos.x = clampf(_my_pos.x, -ARENA_HALF, ARENA_HALF)
-    _my_pos.z = clampf(_my_pos.z, -ARENA_HALF, ARENA_HALF)
-    _update_my_mesh()
+        _me.position -= fwd * MOVE_SPEED * delta
+    _me.position.x = clampf(_me.position.x, -ARENA_HALF, ARENA_HALF)
+    _me.position.z = clampf(_me.position.z, -ARENA_HALF, ARENA_HALF)
     if Input.is_action_pressed("ui_accept"):
         _try_fire(fwd)
-    _send_accum += delta
-    if _send_accum >= SEND_INTERVAL:
-        _send_accum = 0.0
-        MultiplayerService.patch_entity_state(_my_id, {"x": _my_pos.x, "z": _my_pos.z, "yaw": _my_yaw})
 
 func _update_camera() -> void:
-    if not _meshes.has(_my_id):
+    if _me == null:
         return
-    var fwd := Vector3(sin(_my_yaw), 0.0, cos(_my_yaw))
-    _camera.position = _my_pos + Vector3(0, 6.0, 0) - fwd * 9.0
-    _camera.look_at(_my_pos + Vector3(0, 1.0, 0), Vector3.UP)</pre>
+    var fwd := Vector3(sin(_me.rotation.y), 0.0, cos(_me.rotation.y))
+    _camera.position = _me.position + Vector3(0, 6.0, 0) - fwd * 9.0
+    _camera.look_at(_me.position + Vector3(0, 1.0, 0), Vector3.UP)</pre>
 
-    <h2>6. Shoot (hitscan) over the event relay</h2>
-    <p>Firing sends a ray. Everyone draws a tracer; each client checks whether the ray passes close
-        to <em>its own</em> player and, if so, takes damage.</p>
+    <h3>2f. Hitscan shooting &amp; damage</h3>
     <pre>func _try_fire(fwd: Vector3) -> void:
     if _fire_cd > 0.0:
         return
     _fire_cd = FIRE_COOLDOWN
-    var origin := _my_pos + Vector3(0, 1.0, 0)
+    var origin := _me.position + Vector3(0, 1.0, 0)
     MultiplayerService.send_event("shoot", {
         "ox": origin.x, "oy": origin.y, "oz": origin.z,
         "dx": fwd.x, "dy": fwd.y, "dz": fwd.z,
     })
     _spawn_tracer(origin, origin + fwd * 60.0)
 
-func _on_event(event: String, data: Dictionary, from_id: String) -> void:
-    if event == "shoot":
-        var origin := Vector3(float(data.get("ox", 0)), float(data.get("oy", 0)), float(data.get("oz", 0)))
-        var dir := Vector3(float(data.get("dx", 0)), float(data.get("dy", 0)), float(data.get("dz", 0)))
-        _spawn_tracer(origin, origin + dir * 60.0)
-        if _respawning:
-            return
-        var me := _my_pos + Vector3(0, 1.0, 0)
-        var t := (me - origin).dot(dir)             # distance along the ray to my chest
-        if t &lt; 0.0:
-            return                                   # I'm behind the shooter
-        if (origin + dir * t).distance_to(me) &lt;= HIT_RADIUS:
-            _take_hit(from_id)
-    elif event == "frag" and str(data.get("killer", "")) == _my_id:
-        var rec: Dictionary = _players.get(_my_id, {})
-        rec["kills"] = int(rec.get("kills", 0)) + 1
-        _players[_my_id] = rec
-        MultiplayerService.patch_entity_state(_my_id, {"kills": rec["kills"]})
-        _update_hud()</pre>
+func _on_event(event: String, data: Dictionary, _from_id: String) -> void:
+    if event != "shoot":
+        return
+    var origin := Vector3(float(data.get("ox", 0)), float(data.get("oy", 0)), float(data.get("oz", 0)))
+    var dir := Vector3(float(data.get("dx", 0)), float(data.get("dy", 0)), float(data.get("dz", 0)))
+    _spawn_tracer(origin, origin + dir * 60.0)
+    if _respawning or _me == null:
+        return
+    var me := _me.position + Vector3(0, 1.0, 0)
+    var t := (me - origin).dot(dir)        # distance along the ray to my chest
+    if t &lt; 0.0:
+        return                              # I'm behind the shooter
+    if (origin + dir * t).distance_to(me) &lt;= HIT_RADIUS:
+        _take_hit()
 
-    <h2>7. Damage, death &amp; respawn</h2>
-    <pre>func _take_hit(shooter_id: String) -> void:
-    var rec: Dictionary = _players.get(_my_id, {})
-    var hp := int(rec.get("hp", MAX_HP)) - HIT_DAMAGE
-    if hp &lt;= 0:
-        MultiplayerService.send_event("frag", {"killer": shooter_id})
+func _take_hit() -> void:
+    _me.hp -= HIT_DAMAGE      # SpawnSync replicates the new hp
+    _update_hud()
+    if _me.hp &lt;= 0:
         _respawn()
     else:
-        rec["hp"] = hp
-        _players[_my_id] = rec
-        MultiplayerService.patch_entity_state(_my_id, {"hp": hp})
-        _update_hud()
+        _set_status("Hit! HP %d" % _me.hp)
 
 func _respawn() -> void:
     _respawning = true
     _set_status("Fragged! Respawning…")
     await get_tree().create_timer(1.5).timeout
-    _my_pos = _random_spawn()
-    var rec: Dictionary = _players.get(_my_id, {})
-    rec["hp"] = MAX_HP
-    _players[_my_id] = rec
-    MultiplayerService.patch_entity_state(_my_id, {"x": _my_pos.x, "z": _my_pos.z, "hp": MAX_HP})
+    _me.position = _random_spawn()
+    _me.hp = MAX_HP
     _respawning = false
     _update_hud()
     _set_status("Fight! Left/Right turn · Up/Down move · Space shoots.")</pre>
 
-    <h2>8. Receive other players (snapshot + updates)</h2>
-    <pre>func _on_snapshot(snapshot: Dictionary) -> void:
-    for e in snapshot.get("entities", []):
-        var id := str(e.get("entityId", ""))
-        if id != _my_id:
-            _apply_entity(id, e.get("state", {}))
-
-func _on_entity_changed(entity_id: String, _patch: Dictionary, full: Dictionary) -> void:
-    if entity_id != _my_id:
-        _apply_entity(entity_id, full)
-
-func _apply_entity(id: String, s: Dictionary) -> void:
-    _players[id] = {
-        "pos": Vector3(float(s.get("x", 0)), 0.0, float(s.get("z", 0))),
-        "yaw": float(s.get("yaw", 0.0)),
-        "hp": int(s.get("hp", MAX_HP)),
-        "kills": int(s.get("kills", 0)),
-        "name": str(s.get("name", "Player")),
-    }
-    _ensure_mesh(id, Color(0.91, 0.44, 0.29))
-    var mi: MeshInstance3D = _meshes[id]
-    mi.position = _players[id]["pos"] + Vector3(0, 1.0, 0)
-    mi.rotation = Vector3(0, _players[id]["yaw"], 0)
-    _update_hud()
-
-func _remove_player(id: String) -> void:
-    if _meshes.has(id):
-        _meshes[id].queue_free()
-        _meshes.erase(id)
-    _players.erase(id)
-    _update_hud()
-
-func _on_match_over(reason: String) -> void:
+    <h3>2g. Tracer, HUD &amp; connect controls</h3>
+    <pre>func _on_match_over(reason: String) -> void:
     _in_match = false
     _find_btn.disabled = false
-    _set_status(reason)</pre>
-
-    <h2>9. Meshes, tracer &amp; helpers</h2>
-    <pre>func _ensure_mesh(id: String, color: Color) -> void:
-    if _meshes.has(id):
-        return
-    var body := MeshInstance3D.new()
-    var capsule := CapsuleMesh.new()
-    capsule.radius = 0.5
-    capsule.height = 2.0
-    body.mesh = capsule
-    var mat := StandardMaterial3D.new()
-    mat.albedo_color = color
-    body.material_override = mat
-    var barrel := MeshInstance3D.new()      # shows facing
-    var box := BoxMesh.new()
-    box.size = Vector3(0.2, 0.2, 1.2)
-    barrel.mesh = box
-    barrel.position = Vector3(0, 0, 0.8)
-    barrel.material_override = mat
-    body.add_child(barrel)
-    add_child(body)
-    _meshes[id] = body
-
-func _update_my_mesh() -> void:
-    var mi: MeshInstance3D = _meshes.get(_my_id)
-    if mi != null:
-        mi.position = _my_pos + Vector3(0, 1.0, 0)
-        mi.rotation = Vector3(0, _my_yaw, 0)
+    _set_status(reason)
 
 func _spawn_tracer(a: Vector3, b: Vector3) -> void:
     var im := ImmediateMesh.new()
@@ -323,10 +291,9 @@ func _random_spawn() -> Vector3:
         randf_range(-ARENA_HALF + 3.0, ARENA_HALF - 3.0))
 
 func _my_name() -> String:
-    return "P%d" % (randi() % 1000)</pre>
+    return "P%d" % (randi() % 1000)
 
-    <h2>10. HUD &amp; connect controls</h2>
-    <pre>func _build_ui() -> void:
+func _build_ui() -> void:
     var layer := CanvasLayer.new()
     add_child(layer)
     var bar := HBoxContainer.new()
@@ -344,27 +311,21 @@ func _my_name() -> String:
     bar.add_child(_find_btn)
     _status = Label.new()
     _status.position = Vector2(16, 56)
-    _status.text = "Click Connect (uses the key + URL saved in the SpawnWeaver dock)."
+    _status.text = "Click Connect (uses the key saved in the SpawnWeaver dock)."
     layer.add_child(_status)
     _hud = Label.new()
     _hud.position = Vector2(16, 84)
     layer.add_child(_hud)
 
 func _update_hud() -> void:
-    var me: Dictionary = _players.get(_my_id, {})
-    var text := "HP %d   Kills %d\n— scores —\n" % [int(me.get("hp", MAX_HP)), int(me.get("kills", 0))]
-    var rows: Array = _players.values()
-    rows.sort_custom(func(a, b): return int(a.get("kills", 0)) > int(b.get("kills", 0)))
-    for r in rows:
-        text += "%s: %d\n" % [str(r.get("name", "?")), int(r.get("kills", 0))]
-    _hud.text = text
+    _hud.text = "HP %d" % _me.hp if _me != null else ""
 
 func _on_connect() -> void:
     if MultiplayerService.connect_using_config():
         _set_status("Connecting…")
         _find_btn.disabled = false
     else:
-        _set_status("Save your public key + server URL in the SpawnWeaver dock first.")
+        _set_status("Save your public key in the SpawnWeaver dock first.")
 
 func _on_find() -> void:
     if not MultiplayerService.is_connected_to_server():
@@ -377,94 +338,34 @@ func _on_find() -> void:
 func _set_status(text: String) -> void:
     _status.text = text</pre>
 
-    <h2>Simpler: the SpawnSync version</h2>
-    <p>The walkthrough above manages meshes and sends transforms by hand. Here's the same game with
-        movement handled by the <a href="/dashboard/docs/sync-nodes">SpawnSync</a> drop-in node — it
-        streams and interpolates each player's capsule for you. The hitscan shooting, damage, and
-        respawn are unchanged.</p>
-
-    <h3>A player scene</h3>
-    <p>Make a <code>player.tscn</code>: a <code>Node3D</code> with a <code>MeshInstance3D</code>
-        (a <code>CapsuleMesh</code>) child for the body, a tiny script (<code>var hp := 100</code>),
-        and a <strong>SpawnSync</strong> child with <em>Sync position</em> + <em>Sync rotation</em> on
-        and <em>Synced properties</em> = <code>hp</code>.</p>
-
-    <h3>Spawn local + remote players</h3>
-    <pre>const PlayerScene := preload("res://player.tscn")
-var _me: Node3D = null
-var _remotes := {}
-
-func _ready() -> void:
-    _build_world()                                  # camera, light, ground (from above)
-    MultiplayerService.match_found.connect(func(_r, _c, _p): _spawn_local())
-    MultiplayerService.state_snapshot_received.connect(func(s):
-        for e in s.get("entities", []): _ensure_remote(str(e.get("entityId", ""))))
-    MultiplayerService.entity_state_changed.connect(func(id, _p, _f): _ensure_remote(id))
-    MultiplayerService.entity_state_deleted.connect(func(id): _remotes.erase(id))
-    MultiplayerService.event_received.connect(_on_event)
-    MultiplayerService.connect_using_config()
-
-func _spawn_local() -> void:
-    _me = PlayerScene.instantiate()
-    _me.position = _random_spawn()
-    _me.get_node("SpawnSync").local = true          # streams my transform automatically
-    add_child(_me)
-
-func _ensure_remote(id: String) -> void:
-    if id == MultiplayerService.player_id or _remotes.has(id):
-        return
-    var p := PlayerScene.instantiate()
-    p.get_node("SpawnSync").entity_id = id          # interpolates this capsule; frees on leave
-    add_child(p)
-    _remotes[id] = p</pre>
-
-    <h3>Drive only yourself</h3>
-    <pre>func _process(delta: float) -> void:
-    if _me == null:
-        return
-    if Input.is_action_pressed("ui_left"):
-        _me.rotation.y += TURN_SPEED * delta
-    if Input.is_action_pressed("ui_right"):
-        _me.rotation.y -= TURN_SPEED * delta
-    var fwd := Vector3(sin(_me.rotation.y), 0.0, cos(_me.rotation.y))
-    if Input.is_action_pressed("ui_up"):
-        _me.position += fwd * MOVE_SPEED * delta
-    if Input.is_action_pressed("ui_down"):
-        _me.position -= fwd * MOVE_SPEED * delta
-    if Input.is_action_pressed("ui_accept"):
-        _try_fire(fwd)                              # same hitscan shoot event as before
-    _update_camera()                               # follow _me
-    # No patch_entity_state here — SpawnSync streams _me for you.</pre>
-
-    <p><strong>What this replaces</strong>: the manual
-        <code>set_entity_state</code>/<code>patch_entity_state</code>, <code>_apply_entity</code>,
-        <code>_ensure_mesh</code>/<code>_update_my_mesh</code>, and the transform parts of the
-        snapshot handler — SpawnSync streams and interpolates the capsule. Keep the hitscan
-        <code>_try_fire</code>/<code>_on_event</code> and hit/respawn; <code>hp</code> rides along via
-        Synced properties.</p>
-
-    <h2>11. Play it with two windows</h2>
+    <h2>3. Play it with two windows</h2>
     <ol>
         <li><em>Debug → Run Multiple Instances</em>, set <strong>2</strong>, and run the scene.</li>
-        <li>In both windows: <strong>Connect</strong> → <strong>Find Match</strong> to be paired into
-            the same arena.</li>
-        <li>Left/Right turn, Up/Down drive, Space shoots. Line up your barrel and fire; the HUD shows
-            HP and the kill scoreboard. Watch sessions on the
+        <li>In both windows: <strong>Connect</strong> → <strong>Find Match</strong> to be paired into the
+            same arena.</li>
+        <li><strong>Click a window to focus it</strong>, then Left/Right turn, Up/Down drive, Space shoots.
+            Line up your barrel and fire; the HUD shows your HP. Watch sessions on the
             <a href="/dashboard/debugger">Debugger</a>.</li>
     </ol>
+    <div class="banner" style="border-color:var(--border);color:var(--steel)">
+        <span>🎮</span>
+        <span>Two windows on one PC share one keyboard, so you drive whichever is focused (that's the focus
+            guard). For two players at once, run it on <strong>two machines</strong> (or with two people).
+            Latency is dominated by distance to your server's region — pick a region near your players.</span>
+    </div>
     <p class="muted">More players? Raise the match size in
-        <code>join_matchmaking(GAME_MODE, "", 2, …)</code>. Want mouse-look or real bullet drop?
-        Swap the hitscan ray for a projectile like the <a href="/dashboard/docs/tutorial-2d-shooter">2D
-        shooter</a> uses.</p>
+        <code>join_matchmaking(GAME_MODE, "", 2, …)</code> (e.g. <code>4</code>).</p>
 
     <h2>Extend it</h2>
     <ul>
+        <li><strong>Mouse-look &amp; strafing</strong> — capture the mouse and aim with it; keep the focus
+            guard so a background instance doesn't track your cursor.</li>
         <li><strong>Physics &amp; cover</strong> — give players a <code>CharacterBody3D</code> and add
-            obstacle meshes; raycast against the physics world for line-of-sight.</li>
+            obstacle meshes; raycast the physics world for line-of-sight.</li>
+        <li><strong>More synced state</strong> — add fields like <code>team</code> to SpawnSync's
+            <em>Synced properties</em> and they replicate automatically.</li>
         <li><strong>Persist stats</strong> — store wins/kills with player storage (see
             <a href="/dashboard/docs/tutorial-profile">Save a player profile</a>).</li>
-        <li><strong>Rounds</strong> — let the host run a timer/score target with
-            <code>patch_room_state()</code> (see <a href="/dashboard/docs/tutorial-state-sync">Simple state sync</a>).</li>
     </ul>
 
     <div class="docs-next">
