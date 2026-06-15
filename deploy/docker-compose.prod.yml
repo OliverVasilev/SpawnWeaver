@@ -1,11 +1,11 @@
-# SpawnWeaver — production stack for a single VPS (e.g. Hetzner).
+# SpawnWeaver — production stack for a single Linux box (e.g. AWS Lightsail).
 # Caddy (automatic HTTPS) -> API -> PostgreSQL. WebSockets pass through Caddy transparently.
 #
 # First-time setup (from the repo root on the server):
 #   cp deploy/.env.example deploy/.env   &&   edit deploy/.env
 #   docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml up -d --build
 #
-# See docs/hosting-hetzner.md for the full walkthrough.
+# See docs/hosting-aws-lightsail.md for the full walkthrough.
 
 services:
   caddy:

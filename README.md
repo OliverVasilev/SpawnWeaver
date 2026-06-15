@@ -335,7 +335,7 @@ Use `http://localhost:5159` instead of `spawnweaver.example` when running locall
 - [Developer onboarding (alpha)](./docs/onboarding.md) — create a project, install the SDK, connect.
 - [Realtime protocol](./docs/protocol.md) — the message envelope and every message type.
 - [Infrastructure & playtest guide](./docs/infrastructure.md) — modes, env vars, Docker, load testing.
-- [Hosting on a Hetzner VPS](./docs/hosting-hetzner.md) — full production stack (Caddy HTTPS + Postgres) in one command, plus [automatic CI/CD deploys](./docs/hosting-hetzner.md#automatic-deploys-cicd) from GitHub.
+- [Hosting on AWS Lightsail](./docs/hosting-aws-lightsail.md) — full production stack (Caddy HTTPS + Postgres) in one command, plus [automatic CI/CD deploys](./docs/hosting-aws-lightsail.md#automatic-deploys-cicd) from GitHub.
 - [Hosting the alpha](./docs/alpha-hosting.md) — deploy, lock down, and monitor an alpha.
 - [Performance baseline](./docs/performance.md) · [Known limitations](./docs/known-limitations.md) · [Milestone progress](./docs/milestones.md)
 

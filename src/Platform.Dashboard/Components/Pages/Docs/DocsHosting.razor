@@ -1,36 +1,43 @@
 @page "/dashboard/docs/hosting"
 
-<div class="page-head"><h2>Host on Hetzner</h2></div>
+<div class="page-head"><h2>Host on AWS Lightsail</h2></div>
 
 <DocsPage Slug="hosting">
-    <h1>Host SpawnWeaver on a Hetzner VPS</h1>
+    <h1>Host SpawnWeaver on AWS Lightsail</h1>
     <p class="lead">
-        Put the whole backend — API, database, and automatic HTTPS — on one small server in about
-        15 minutes. After this you'll have a real <code>https://your-domain</code> that players and
-        the SDK connect to.
+        Put the whole backend — API, database, and automatic HTTPS — on one small Lightsail
+        instance in about 15 minutes. After this you'll have a real <code>https://your-domain</code>
+        that players and the SDK connect to.
     </p>
 
     <p>You'll use one <strong>Docker Compose</strong> stack: <strong>Caddy</strong> (handles HTTPS
         and WebSockets for you) → the <strong>API</strong> → <strong>PostgreSQL</strong>. You need a
-        domain you can edit DNS for, and a Hetzner account.</p>
+        domain you can edit DNS for, and an AWS account.</p>
 
-    <h2>1. Create the server</h2>
-    <p>In Hetzner Cloud, add a server: <strong>CX22</strong> (2 vCPU / 4 GB is plenty to start),
-        image <strong>Ubuntu 24.04</strong>, and add your SSH key. Note its public IPv4 address.</p>
+    <h2>1. Create the instance</h2>
+    <p>In the Lightsail console, create an instance: platform <strong>Linux/Unix</strong>, blueprint
+        <strong>OS Only → Ubuntu 24.04 LTS</strong>, the <strong>$10/mo</strong> plan (2 GB) to start.
+        Download the SSH key (<code>.pem</code>) if you don't already have it.</p>
 
-    <h2>2. Point your domain at it</h2>
-    <p>At your DNS provider, add an <strong>A record</strong> for your domain to the server's IP:</p>
-    <pre>spawnweaver.example.   A   &lt;your-server-ip&gt;</pre>
+    <h2>2. Give it a static IP &amp; open the firewall</h2>
+    <p>Lightsail → <strong>Networking</strong> → <strong>Create static IP</strong> and attach it
+        (otherwise the IP changes on reboot). Then on the instance's
+        <strong>Networking → IPv4 Firewall</strong>, add rules for <strong>HTTP (80)</strong> and
+        <strong>HTTPS (443)</strong>. Without these two, Caddy can never issue a certificate.</p>
+
+    <h2>3. Point your domain at it</h2>
+    <p>At your DNS provider, add an <strong>A record</strong> for your domain to the static IP:</p>
+    <pre>spawnweaver.example.   A   &lt;your-static-ip&gt;</pre>
     <p>Wait until it resolves (<code>ping spawnweaver.example</code> shows the IP). Caddy needs
         working DNS to issue the HTTPS certificate.</p>
 
-    <h2>3. Install Docker</h2>
-    <p>SSH in (<code>ssh root@@&lt;your-server-ip&gt;</code>) and install Docker, then open the
-        firewall to SSH + web only:</p>
-    <pre>curl -fsSL https://get.docker.com | sh
-ufw allow 22/tcp &amp;&amp; ufw allow 80/tcp &amp;&amp; ufw allow 443/tcp &amp;&amp; ufw --force enable</pre>
+    <h2>4. Install Docker</h2>
+    <p>SSH in as the default <code>ubuntu</code> user
+        (<code>ssh -i LightsailKey.pem ubuntu@@&lt;your-static-ip&gt;</code>) and install Docker:</p>
+    <pre>curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker ubuntu          # run docker without sudo (re-login to apply)</pre>
 
-    <h2>4. Get the code and set your secrets</h2>
+    <h2>5. Get the code and set your secrets</h2>
     <pre>git clone &lt;your-repo-url&gt; spawnweaver &amp;&amp; cd spawnweaver
 cp deploy/.env.example deploy/.env
 nano deploy/.env</pre>
@@ -43,7 +50,7 @@ nano deploy/.env</pre>
             (leave blank to start — accounts auto-verify until you add it)</li>
     </ul>
 
-    <h2>5. Launch it</h2>
+    <h2>6. Launch it</h2>
     <pre>docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml up -d --build</pre>
     <p>Caddy fetches an HTTPS certificate within a few seconds. Confirm it's up:</p>
     <pre>curl https://spawnweaver.example/health
@@ -72,7 +79,7 @@ docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml up -d --
 # Back up the database
 docker exec spawnweaver-db pg_dump -U spawnweaver spawnweaver &gt; backup-$(date +%F).sql</pre>
     <p class="muted">For the full reference (operations, restore, troubleshooting) see
-        <code>docs/hosting-hetzner.md</code> in the repo.</p>
+        <code>docs/hosting-aws-lightsail.md</code> in the repo (including one-click CI/CD deploys).</p>
 
     <div class="docs-next">
         <a href="/dashboard/docs">← Overview</a>
