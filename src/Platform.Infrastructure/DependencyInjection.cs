@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -149,9 +151,15 @@ public static class DependencyInjection
         return options;
     }
 
+    // Serializes SQLite schema creation: the test WebApplicationFactory can build the host more
+    // than once (and concurrently) against the same file, and EnsureCreated() — unlike Migrate() —
+    // is not idempotent, so two creators would both try to CreateTables and the second throws
+    // "table already exists".
+    private static readonly object SqliteInitLock = new();
+
     /// <summary>
     /// Prepares the database at startup. PostgreSQL (production) applies versioned EF
-    /// migrations so schema changes ship safely; the disposable local-dev SQLite database is
+    /// migrations so schema changes ship safely; the disposable local-dev/test SQLite database is
     /// created directly from the model (no migration history needed).
     /// </summary>
     public static void InitializePlatformDatabase(this IServiceProvider services)
@@ -162,10 +170,17 @@ public static class DependencyInjection
         if (db.Database.IsNpgsql())
         {
             db.Database.Migrate();
+            return;
         }
-        else
+
+        // SQLite: create the schema from the model once, idempotently.
+        lock (SqliteInitLock)
         {
-            db.Database.EnsureCreated();
+            var creator = db.Database.GetService<IRelationalDatabaseCreator>();
+            if (!creator.HasTables())
+            {
+                db.Database.EnsureCreated();
+            }
         }
     }
 
