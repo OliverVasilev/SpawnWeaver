@@ -5,6 +5,7 @@ extends Control
 
 const CONFIG_PATH := "res://addons/multiplayer_service/spawnweaver.cfg"
 const SERVER_URL := "wss://spawnweaver.dev/connect"
+const STARTER_TEMPLATE := "res://addons/multiplayer_service/templates/starter_game.gd"
 
 var _key_edit: LineEdit
 var _result: Label
@@ -57,6 +58,11 @@ func _build_ui() -> void:
 	var test := Button.new(); test.text = "Test connection"
 	test.pressed.connect(_on_test)
 	root.add_child(test)
+
+	var generate := Button.new(); generate.text = "Generate starter scene"
+	generate.tooltip_text = "Creates a ready-to-run multiplayer scene under res://spawnweaver/"
+	generate.pressed.connect(_on_generate)
+	root.add_child(generate)
 
 	_result = Label.new()
 	_result.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -134,6 +140,43 @@ func _stop_test() -> void:
 	if _socket != null:
 		_socket.close()
 		_socket = null
+
+
+# --- Starter scene generator ---
+
+func _on_generate() -> void:
+	var source := FileAccess.get_file_as_string(STARTER_TEMPLATE)
+	if source == "":
+		_set_result("Could not read the starter template.")
+		return
+
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://spawnweaver/scripts"))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://spawnweaver/scenes"))
+
+	var script_path := "res://spawnweaver/scripts/StarterGame.gd"
+	var scene_path := "res://spawnweaver/scenes/StarterGame.tscn"
+	if not _write_file(script_path, source):
+		_set_result("Could not write " + script_path)
+		return
+	var scene_text := "[gd_scene load_steps=2 format=3]\n\n" \
+		+ "[ext_resource type=\"Script\" path=\"%s\" id=\"1\"]\n\n" % script_path \
+		+ "[node name=\"StarterGame\" type=\"Node2D\"]\nscript = ExtResource(\"1\")\n"
+	if not _write_file(scene_path, scene_text):
+		_set_result("Could not write " + scene_path)
+		return
+
+	if Engine.is_editor_hint():
+		EditorInterface.get_resource_filesystem().scan()
+	_set_result("Created %s — open it from the FileSystem dock and press Play." % scene_path)
+
+
+func _write_file(path: String, contents: String) -> bool:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(contents)
+	file.close()
+	return true
 
 
 func _set_result(text: String) -> void:
