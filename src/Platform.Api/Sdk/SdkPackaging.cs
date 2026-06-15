@@ -29,37 +29,62 @@ internal static class SdkPackaging
         var outDir = Path.Combine(webRoot, "sdk");
         var outPath = Path.Combine(outDir, "multiplayer_service.zip");
 
+        // Build into a unique temp file then atomically move into place. This keeps the served zip
+        // intact and avoids a write race when several hosts share a content root (e.g. parallel
+        // integration tests). Packaging is best-effort: never let a failure crash startup.
+        var tempPath = outPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {
             Directory.CreateDirectory(outDir);
-            if (File.Exists(outPath))
-            {
-                File.Delete(outPath);
-            }
 
-            using var zip = ZipFile.Open(outPath, ZipArchiveMode.Create);
-            foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
+            using (var zip = ZipFile.Open(tempPath, ZipArchiveMode.Create))
             {
-                var rel = Path.GetRelativePath(source, file).Replace('\\', '/');
-
-                // Don't ship local credentials; the editor dock / quickstart writes spawnweaver.cfg.
-                if (rel.Equals("spawnweaver.cfg", StringComparison.OrdinalIgnoreCase))
+                foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
                 {
-                    continue;
-                }
+                    var rel = Path.GetRelativePath(source, file).Replace('\\', '/');
 
-                zip.CreateEntryFromFile(file, $"{AddonRelative}/{rel}", CompressionLevel.Optimal);
+                    // Don't ship local credentials; the editor dock / quickstart writes spawnweaver.cfg.
+                    if (rel.Equals("spawnweaver.cfg", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    zip.CreateEntryFromFile(file, $"{AddonRelative}/{rel}", CompressionLevel.Optimal);
+                }
             }
+
+            File.Move(tempPath, outPath, overwrite: true);
 
 #pragma warning disable CA1848
             logger.LogInformation("Packaged Godot SDK addon to {Path}", outPath);
 #pragma warning restore CA1848
         }
-        catch (IOException ex)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            // Another host won the race, or the file is briefly locked — the existing zip is fine.
+            TryDelete(tempPath);
 #pragma warning disable CA1848
-            logger.LogWarning(ex, "Could not package the Godot SDK zip.");
+            logger.LogWarning(ex, "Could not (re)package the Godot SDK zip; using any existing copy.");
 #pragma warning restore CA1848
+        }
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+        catch (IOException)
+        {
+            // Best-effort cleanup of the temp file.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Best-effort cleanup of the temp file.
         }
     }
 
