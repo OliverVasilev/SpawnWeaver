@@ -45,6 +45,8 @@ public static class DependencyInjection
             else
             {
                 options.UseSqlite(connectionString ?? DefaultConnectionString);
+                // Make file-backed SQLite tolerate concurrent writers (busy_timeout + WAL).
+                options.AddInterceptors(new SqlitePragmaInterceptor());
             }
         });
 
