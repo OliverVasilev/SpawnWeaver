@@ -5,7 +5,7 @@
 #   cp deploy/.env.example deploy/.env   &&   edit deploy/.env
 #   docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml up -d --build
 #
-# See docs/hosting-aws-lightsail.md for the full walkthrough.
+# See ops/hosting-aws-lightsail.md for the full walkthrough.
 
 services:
   caddy:

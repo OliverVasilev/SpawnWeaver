@@ -7,7 +7,7 @@ Add real-time multiplayer to a Godot game with SpawnWeaver. No backend code requ
 ```bash
 # From the repo root:
 docker compose -f deploy/docker-compose.test.yml up --build -d
-curl http://localhost:8080/health      # { "status": "ok", ... }
+curl https://spawnweaver.dev/health      # { "status": "ok", ... }
 ```
 
 (Or run it directly: `dotnet run --project src/Platform.Api` — note the port it prints.)
@@ -15,7 +15,7 @@ curl http://localhost:8080/health      # { "status": "ok", ... }
 ## 2. Create a project & copy your public key (1 min)
 
 ```bash
-curl -X POST http://localhost:8080/api/projects \
+curl -X POST https://spawnweaver.dev/api/projects \
   -H "Content-Type: application/json" -d '{"name":"My Game"}'
 # -> { "id":"proj_…", "publicKey":"pk_…", "secretKey":"sk_…", ... }
 ```
@@ -42,7 +42,7 @@ func _ready() -> void:
         push_warning(MultiplayerService.describe_error(code)))
 
     MultiplayerService.configure("pk_your_public_key")          # from step 2
-    MultiplayerService.connect_to_server("ws://127.0.0.1:8080/connect")
+    MultiplayerService.connect_to_server("wss://spawnweaver.dev/connect")
 
 func _on_connected() -> void:
     MultiplayerService.create_room("Alice")                    # or join_room("CODE")

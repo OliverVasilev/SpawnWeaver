@@ -2,7 +2,7 @@ name: Deploy
 
 # Build a Docker image, push it to GHCR, then SSH into the AWS Lightsail instance to pull +
 # restart. Host-agnostic: the VPS_* secrets point at any Linux box with Docker (see
-# docs/hosting-aws-lightsail.md). Runs on every push to main; also runnable manually from the
+# ops/hosting-aws-lightsail.md). Runs on every push to main; also runnable manually from the
 # Actions tab (Run workflow) — that's the one-click deploy.
 on:
   push:

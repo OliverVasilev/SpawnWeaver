@@ -15,7 +15,7 @@ extends Control
 ##      Window B: List Lobbies -> Join, or paste the code -> Join.
 ##   4. Each player clicks Ready. When everyone is ready, the host's Start Game enables.
 
-const DEFAULT_URL := "ws://127.0.0.1:5000/connect"
+const DEFAULT_URL := "wss://spawnweaver.dev/connect"
 
 var _url_edit: LineEdit
 var _key_edit: LineEdit

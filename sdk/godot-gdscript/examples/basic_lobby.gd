@@ -6,7 +6,7 @@ extends Control
 ## 3. Set the URL to match your backend, click Connect, then Create or Join.
 ## Run two copies of this scene (Debug > Run Multiple Instances) to see two players.
 
-const DEFAULT_URL := "ws://127.0.0.1:5000/connect"
+const DEFAULT_URL := "wss://spawnweaver.dev/connect"
 
 var _url_edit: LineEdit
 var _key_edit: LineEdit

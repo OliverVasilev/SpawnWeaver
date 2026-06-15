@@ -13,7 +13,7 @@ extends Node2D
 ##   3. Both: paste the key, fix URL/port, Connect, then Find Match. You'll be paired.
 ##   4. Move with the arrow keys; End Match returns you to the queue screen.
 
-const DEFAULT_URL := "ws://127.0.0.1:5000/connect"
+const DEFAULT_URL := "wss://spawnweaver.dev/connect"
 const GAME_MODE := "duel_1v1"
 const SPEED := 240.0
 const SEND_INTERVAL := 0.05            # 20 position updates/sec (under the rate limit)

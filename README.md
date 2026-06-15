@@ -134,7 +134,7 @@ curl http://localhost:8080/health
 ```
 
 For a near-free **playtest** (single container, persisted SQLite) use the test profile and
-see the [infrastructure & playtest guide](./docs/infrastructure.md):
+see the [infrastructure & playtest guide](./ops/infrastructure.md):
 
 ```bash
 docker compose -f deploy/docker-compose.test.yml up --build -d
@@ -269,7 +269,7 @@ Every HTTP response carries an `X-Correlation-Id`; realtime connections are trac
 Open a WebSocket connection using a project's **public** key:
 
 ```text
-ws://localhost:5000/connect?projectKey=pk_xxxxxxxx
+wss://spawnweaver.dev/connect?projectKey=pk_xxxxxxxx
 ```
 
 On success the server sends a welcome message and tracks the connection:
@@ -310,7 +310,7 @@ the WebSocket connection and exposes connection/room/event activity as Godot sig
 
 ```gdscript
 MultiplayerService.configure("pk_your_public_key")
-MultiplayerService.connect_to_server("ws://127.0.0.1:5000/connect")
+MultiplayerService.connect_to_server("wss://spawnweaver.dev/connect")
 MultiplayerService.create_room("Alice")
 MultiplayerService.join_room("ABCD12", "Bob")
 ```
@@ -334,10 +334,15 @@ Use `http://localhost:5159` instead of `spawnweaver.dev` when running locally.
 - [Multiplayer in 10 minutes](./docs/tutorial.md) — fastest path to two players moving.
 - [Developer onboarding (alpha)](./docs/onboarding.md) — create a project, install the SDK, connect.
 - [Realtime protocol](./docs/protocol.md) — the message envelope and every message type.
-- [Infrastructure & playtest guide](./docs/infrastructure.md) — modes, env vars, Docker, load testing.
-- [Hosting on AWS Lightsail](./docs/hosting-aws-lightsail.md) — full production stack (Caddy HTTPS + Postgres) in one command, plus [automatic CI/CD deploys](./docs/hosting-aws-lightsail.md#automatic-deploys-cicd) from GitHub.
-- [Hosting the alpha](./docs/alpha-hosting.md) — deploy, lock down, and monitor an alpha.
 - [Performance baseline](./docs/performance.md) · [Known limitations](./docs/known-limitations.md) · [Milestone progress](./docs/milestones.md)
+
+### Operations (internal)
+
+SpawnWeaver is a hosted service — these are private ops runbooks, not customer docs:
+
+- [`ops/hosting-aws-lightsail.md`](./ops/hosting-aws-lightsail.md) — production stack (Caddy HTTPS + Postgres) and the [one-click CI/CD deploy](./ops/hosting-aws-lightsail.md#automatic-deploys-cicd).
+- [`ops/infrastructure.md`](./ops/infrastructure.md) — run modes, env vars, Docker, load testing.
+- [`ops/alpha-hosting.md`](./ops/alpha-hosting.md) — deploy, lock down, and monitor an alpha.
 
 ## License
 

@@ -63,7 +63,7 @@ func _build_ui() -> void:
 	_key_edit = LineEdit.new(); _key_edit.placeholder_text = "pk_…"
 	root.add_child(_key_edit)
 	root.add_child(_labeled("Server URL"))
-	_url_edit = LineEdit.new(); _url_edit.text = "ws://127.0.0.1:5000/connect"
+	_url_edit = LineEdit.new(); _url_edit.text = "wss://spawnweaver.dev/connect"
 	root.add_child(_url_edit)
 	root.add_child(_labeled("Environment"))
 	_env_option = OptionButton.new()
@@ -291,7 +291,7 @@ func _http_base() -> String:
 	if connect_index != -1:
 		url = url.substr(0, connect_index)
 	if url == "":
-		url = "http://127.0.0.1:5000"
+		url = "https://spawnweaver.dev"
 	return url
 
 

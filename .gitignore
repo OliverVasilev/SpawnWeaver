@@ -1,3 +1,8 @@
+## Secrets / keys — never commit (repo is public)
+*.pem
+*.key
+deploy/.env
+
 ## .NET
 bin/
 obj/

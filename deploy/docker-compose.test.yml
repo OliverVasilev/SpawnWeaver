@@ -1,6 +1,6 @@
 # SpawnWeaver — near-free playtest profile (Mode B).
 # A single .NET container with a persisted SQLite database. Cheapest way to let real
-# test players connect. See docs/infrastructure.md for the full playtest guide.
+# test players connect. See ops/infrastructure.md for the full playtest guide.
 #
 #   docker compose -f deploy/docker-compose.test.yml up --build -d
 #   curl http://localhost:8080/health

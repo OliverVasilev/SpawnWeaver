@@ -11,7 +11,7 @@ extends Control
 ##   4. Window A: Create Room -> share the code. Window B: type the code -> Join.
 ##   5. Type messages and press Send (or Enter); both windows see them.
 
-const DEFAULT_URL := "ws://127.0.0.1:5000/connect"
+const DEFAULT_URL := "wss://spawnweaver.dev/connect"
 
 var _url_edit: LineEdit
 var _key_edit: LineEdit

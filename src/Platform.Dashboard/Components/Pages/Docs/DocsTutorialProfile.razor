@@ -18,19 +18,19 @@
 
     <h2>Save values</h2>
     <pre>curl -X PUT \
-  http://localhost:5000/api/storage/proj_xxx/players/player_1/keys/display_name \
+  https://spawnweaver.dev/api/storage/proj_xxx/players/player_1/keys/display_name \
   -H "Authorization: Bearer sk_xxx" -d 'Alice'
 
 curl -X PUT \
-  http://localhost:5000/api/storage/proj_xxx/players/player_1/keys/xp \
+  https://spawnweaver.dev/api/storage/proj_xxx/players/player_1/keys/xp \
   -H "Authorization: Bearer sk_xxx" -d '1500'</pre>
 
     <h2>Load a profile on login</h2>
-    <pre>curl http://localhost:5000/api/storage/proj_xxx/players/player_1/keys/xp \
+    <pre>curl https://spawnweaver.dev/api/storage/proj_xxx/players/player_1/keys/xp \
   -H "Authorization: Bearer sk_xxx"
 # 200 -> { "key": "xp", "value": "1500", "updatedAtUtc": "…" }
 
-curl http://localhost:5000/api/storage/proj_xxx/players/player_1/keys \
+curl https://spawnweaver.dev/api/storage/proj_xxx/players/player_1/keys \
   -H "Authorization: Bearer sk_xxx"   # list a player's keys</pre>
 
     <h2>State sync vs persistence</h2>

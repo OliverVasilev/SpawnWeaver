@@ -3,7 +3,7 @@ extends Node
 ##
 ## Minimal usage:
 ##     MultiplayerService.configure("pk_your_public_key")
-##     MultiplayerService.connect_to_server("ws://127.0.0.1:5000/connect")
+##     MultiplayerService.connect_to_server("wss://spawnweaver.dev/connect")
 ##     # ... on the `connected` signal:
 ##     MultiplayerService.create_room("Alice")
 ##     MultiplayerService.join_room("ABCD12", "Bob")
@@ -21,7 +21,7 @@ const SDK_VERSION := "0.3.0"
 const CONFIG_PATH := "res://addons/multiplayer_service/spawnweaver.cfg"
 
 ## Fallback server URL when none is configured.
-const DEFAULT_SERVER_URL := "ws://127.0.0.1:5000/connect"
+const DEFAULT_SERVER_URL := "wss://spawnweaver.dev/connect"
 
 # --- Connection lifecycle ---
 signal connected()
@@ -202,7 +202,7 @@ func is_connected_to_server() -> bool:
 	return _state == State.CONNECTED
 
 
-## Opens a WebSocket connection. `url` is e.g. "ws://127.0.0.1:5000/connect".
+## Opens a WebSocket connection. `url` is e.g. "wss://spawnweaver.dev/connect".
 func connect_to_server(url: String) -> void:
 	_last_url = url
 	_user_closed = false

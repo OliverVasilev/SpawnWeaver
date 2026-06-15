@@ -16,7 +16,7 @@
     MultiplayerService.room_joined.connect(func(_id, _c, _player, players): print("players: ", players.size()))
     MultiplayerService.event_received.connect(_on_event)
     MultiplayerService.configure("pk_your_public_key")
-    MultiplayerService.connect_to_server("ws://127.0.0.1:5000/connect")</pre>
+    MultiplayerService.connect_to_server("wss://spawnweaver.dev/connect")</pre>
 
     <h2>2. Create or join a room</h2>
     <pre># Client A:

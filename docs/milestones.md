@@ -261,7 +261,7 @@ Delivered:
   `/connect/stats` now reports `activeConnections` **and** `activeRooms`.
 - **Load-test tool** `tools/Platform.LoadTest` — connects N clients, groups them into
   rooms, relays game events, reports throughput.
-- **Deployment/playtest guide** `docs/infrastructure.md` (modes, Cloudflare Tunnel for
+- **Deployment/playtest guide** `ops/infrastructure.md` (modes, Cloudflare Tunnel for
   external testers, env vars, invite flow, load testing).
 
 **Acceptance criteria**
@@ -271,7 +271,7 @@ Delivered:
 | Backend runs on a single small machine | ✅ single container, validated via Docker |
 | External Godot clients can connect | ✅ WS works through the container; tunnel guide documented |
 | Logs show active connections and rooms | ✅ connection + room lifecycle logs; `/connect/stats` |
-| Test guide explains how to run a playtest | ✅ `docs/infrastructure.md` |
+| Test guide explains how to run a playtest | ✅ `ops/infrastructure.md` |
 | `dotnet build` / `dotnet test` pass | ✅ (40 tests) |
 
 > Validated: Docker image built and run; `/health`, `POST /api/projects`, and a 12-client
@@ -607,7 +607,7 @@ Delivered:
 - **Sample Godot project** — the `sdk/godot-gdscript` project with `examples/movement_demo`
   and `examples/basic_lobby`.
 - **Known-limitations page** — `docs/known-limitations.md`.
-- **Hosted alpha guide** — `docs/alpha-hosting.md` (deploy, lock-down config, public WSS via
+- **Hosted alpha guide** — `ops/alpha-hosting.md` (deploy, lock-down config, public WSS via
   Cloudflare Tunnel, monitoring, feedback) with an operator checklist.
 
 **Acceptance criteria**

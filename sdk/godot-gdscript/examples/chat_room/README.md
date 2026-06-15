@@ -34,8 +34,8 @@ that everyone in the room sees — with a live list of connected players.
 
 1. In Godot: **Debug → Run Multiple Instances → 2 instances**, then run the chat scene
    (or run it twice).
-2. In both windows: paste the **public key**, set the URL to match your backend
-   (default `ws://127.0.0.1:5000/connect` — change the port if needed), click **Connect**.
+2. In both windows: paste your project's **public key** (the server URL defaults to
+   `wss://spawnweaver.dev/connect`), click **Connect**.
 3. Window A: **Create Room** and share the shown code. Window B: type the code, click **Join**.
 4. Type a message and press **Enter** (or **Send**). Both windows see it, plus join/leave notices.
 

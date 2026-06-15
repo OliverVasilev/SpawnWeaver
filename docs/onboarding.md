@@ -1,8 +1,7 @@
 # Developer Onboarding (Alpha)
 
 Welcome to the SpawnWeaver alpha. This gets you from zero to two players moving in the same
-room. It assumes you have an alpha endpoint URL (e.g. `https://alpha.example.com`); if you're
-running it yourself, see [alpha-hosting.md](./alpha-hosting.md).
+room. Everything runs on the hosted SpawnWeaver service at `https://spawnweaver.dev`.
 
 > **Running it locally?** The repo-root `quickstart.ps1` / `quickstart.sh` does steps 1–3
 > for you (start backend → create project → wire up the SDK config). See the
@@ -14,11 +13,11 @@ Project creation requires a developer account. Sign up (once), keeping the sessi
 then create a project:
 
 ```bash
-curl -c jar.txt -X POST https://alpha.example.com/api/auth/signup \
+curl -c jar.txt -X POST https://spawnweaver.dev/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"email":"you@studio.com","displayName":"You","password":"supersecret123"}'
 
-curl -b jar.txt -X POST https://alpha.example.com/api/projects \
+curl -b jar.txt -X POST https://spawnweaver.dev/api/projects \
   -H "Content-Type: application/json" -d '{"name":"My Game"}'
 # -> { "id":"proj_…", "publicKey":"pk_…", "secretKey":"sk_…", ... }
 ```
@@ -49,7 +48,7 @@ Use a secure `wss://` URL for the hosted alpha:
 
 ```gdscript
 MultiplayerService.configure("pk_your_public_key")
-MultiplayerService.connect_to_server("wss://alpha.example.com/connect")
+MultiplayerService.connect_to_server("wss://spawnweaver.dev/connect")
 # on `connected`: MultiplayerService.create_room("Alice")   # share the room code
 # the other player: MultiplayerService.join_room("CODE", "Bob")
 # then: MultiplayerService.send_event("player_moved", {"x":10,"y":5}, MultiplayerService.current_room_id)

@@ -28,8 +28,7 @@ iwr https://spawnweaver.dev/install.ps1 -UseBasicParsing | iex
 curl -fsSL https://spawnweaver.dev/install.sh | bash
 ```
 
-Replace `spawnweaver.dev` with your server's address (e.g. `http://localhost:5159` when
-running locally). Then enable **SpawnWeaver Multiplayer Service** in
+Then enable **SpawnWeaver Multiplayer Service** in
 *Project → Project Settings → Plugins*.
 
 ### Manual install
@@ -50,7 +49,7 @@ func _ready() -> void:
     MultiplayerService.player_joined.connect(func(id, player): print("Joined: ", player))
 
     MultiplayerService.configure("pk_your_public_key")        # public key from POST /api/projects
-    MultiplayerService.connect_to_server("ws://127.0.0.1:5000/connect")
+    MultiplayerService.connect_to_server("wss://spawnweaver.dev/connect")
 ```
 
 ## API
@@ -58,7 +57,7 @@ func _ready() -> void:
 | Method | Description |
 |---|---|
 | `configure(project_key)` | Set the public project key (sent as `projectKey`). |
-| `connect_to_server(url)` | Open the WebSocket (e.g. `ws://127.0.0.1:5000/connect`). |
+| `connect_to_server(url)` | Open the WebSocket (e.g. `wss://spawnweaver.dev/connect`). |
 | `connect_using_config()` | Connect using the credentials saved by the editor dock. |
 | `load_config()` | Read the saved credentials `{ public_key, server_url, debug }`. |
 | `disconnect_from_server()` | Close the connection. |

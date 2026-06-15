@@ -13,7 +13,7 @@ const SPEED := 220.0
 const SELF_COLOR := Color(0.2, 0.7, 1.0)
 const OTHER_COLOR := Color(1.0, 0.6, 0.2)
 
-@export var server_url := "ws://127.0.0.1:5000/connect"
+@export var server_url := "wss://spawnweaver.dev/connect"
 @export var project_key := ""
 
 var _self_pos := Vector2(320, 240)

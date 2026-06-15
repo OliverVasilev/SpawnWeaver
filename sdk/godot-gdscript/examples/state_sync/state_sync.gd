@@ -15,7 +15,7 @@ extends Node2D
 ##      Window B: paste the code -> Join (it snapshots A's entity immediately).
 ##   4. Move with the arrow keys. Host can press "Next round". "Delete mine" removes your dot.
 
-const DEFAULT_URL := "ws://127.0.0.1:5000/connect"
+const DEFAULT_URL := "wss://spawnweaver.dev/connect"
 const SPEED := 220.0
 const SEND_INTERVAL := 0.06
 const ARENA := Rect2(40, 170, 720, 360)
