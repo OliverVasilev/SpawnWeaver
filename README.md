@@ -323,11 +323,11 @@ with the **[Multiplayer in 10 minutes](./docs/tutorial.md)** tutorial, or the
 root (the server packages the addon and serves it):
 
 ```powershell
-iwr https://spawnweaver.example/install.ps1 -UseBasicParsing | iex   # Windows
-curl -fsSL https://spawnweaver.example/install.sh | bash             # macOS/Linux
+iwr https://spawnweaver.dev/install.ps1 -UseBasicParsing | iex   # Windows
+curl -fsSL https://spawnweaver.dev/install.sh | bash             # macOS/Linux
 ```
 
-Use `http://localhost:5159` instead of `spawnweaver.example` when running locally.
+Use `http://localhost:5159` instead of `spawnweaver.dev` when running locally.
 
 ## Documentation
 

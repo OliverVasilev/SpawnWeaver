@@ -47,8 +47,8 @@ ENV_FILE="$APP_DIR/deploy/.env"
 if [ ! -f "$ENV_FILE" ]; then
   cat > "$ENV_FILE" <<'ENV'
 # SpawnWeaver production secrets — EDIT THESE before your first deploy.
-DOMAIN=spawnweaver.example
-ACME_EMAIL=you@spawnweaver.example
+DOMAIN=spawnweaver.dev
+ACME_EMAIL=you@spawnweaver.dev
 POSTGRES_PASSWORD=change-me-to-a-long-random-string
 # Resend (leave the key blank to disable real email — accounts then auto-verify):
 EMAIL__RESEND__APIKEY=

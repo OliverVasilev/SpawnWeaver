@@ -27,8 +27,8 @@
 
     <h2>3. Point your domain at it</h2>
     <p>At your DNS provider, add an <strong>A record</strong> for your domain to the static IP:</p>
-    <pre>spawnweaver.example.   A   &lt;your-static-ip&gt;</pre>
-    <p>Wait until it resolves (<code>ping spawnweaver.example</code> shows the IP). Caddy needs
+    <pre>spawnweaver.dev.   A   &lt;your-static-ip&gt;</pre>
+    <p>Wait until it resolves (<code>ping spawnweaver.dev</code> shows the IP). Caddy needs
         working DNS to issue the HTTPS certificate.</p>
 
     <h2>4. Install Docker</h2>
@@ -43,7 +43,7 @@ cp deploy/.env.example deploy/.env
 nano deploy/.env</pre>
     <p>Fill in <code>deploy/.env</code> (it's git-ignored — keep secrets here):</p>
     <ul>
-        <li><code>DOMAIN</code> — your domain, e.g. <code>spawnweaver.example</code></li>
+        <li><code>DOMAIN</code> — your domain, e.g. <code>spawnweaver.dev</code></li>
         <li><code>ACME_EMAIL</code> — your email (Let's Encrypt expiry notices)</li>
         <li><code>POSTGRES_PASSWORD</code> — any long random string</li>
         <li><code>EMAIL__RESEND__APIKEY</code> — your <a href="https://resend.com">Resend</a> key for sign-up emails
@@ -53,22 +53,22 @@ nano deploy/.env</pre>
     <h2>6. Launch it</h2>
     <pre>docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml up -d --build</pre>
     <p>Caddy fetches an HTTPS certificate within a few seconds. Confirm it's up:</p>
-    <pre>curl https://spawnweaver.example/health
+    <pre>curl https://spawnweaver.dev/health
 # {"status":"ok","service":"Platform.Api","version":"…"}</pre>
 
     <h2>You're live</h2>
     <p>Now everything points at your domain:</p>
     <ul>
-        <li>Dashboard &amp; sign-up: <code>https://spawnweaver.example/dashboard</code></li>
-        <li>Players connect at: <code>wss://spawnweaver.example/connect</code></li>
-        <li>SDK install: <code>iwr https://spawnweaver.example/install.ps1 -UseBasicParsing | iex</code></li>
+        <li>Dashboard &amp; sign-up: <code>https://spawnweaver.dev/dashboard</code></li>
+        <li>Players connect at: <code>wss://spawnweaver.dev/connect</code></li>
+        <li>SDK install: <code>iwr https://spawnweaver.dev/install.ps1 -UseBasicParsing | iex</code></li>
     </ul>
 
     <h2>Email for real users</h2>
     <p>The hosted stack requires email verification before sign-in, so add a real sender: create a
         <a href="https://resend.com">Resend</a> API key, <strong>verify your sending domain</strong>,
         set <code>EMAIL__RESEND__APIKEY</code> and <code>EMAIL__FROMADDRESS</code> (e.g.
-        <code>noreply@@spawnweaver.example</code>) in <code>deploy/.env</code>, then re-run the compose
+        <code>noreply@@spawnweaver.dev</code>) in <code>deploy/.env</code>, then re-run the compose
         command. Until then, leave the key blank and accounts auto-verify so you can test.</p>
 
     <h2>Updating &amp; backups</h2>

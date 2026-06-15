@@ -4,8 +4,8 @@ This deploys the whole platform — API, PostgreSQL, and a Caddy reverse proxy w
 HTTPS** — to a single Lightsail instance with Docker Compose. Caddy terminates TLS and forwards
 both HTTP and WebSocket traffic to the API, so `wss://` "just works".
 
-> Placeholder domain: this guide uses **`spawnweaver.example`**. Replace it with your real
-> domain everywhere (and in `deploy/.env`).
+> This guide uses **`spawnweaver.dev`** — the project's production domain. If you're self-hosting
+> a fork, substitute your own domain everywhere (and in `deploy/.env`).
 
 > **Want automatic deploys?** Skip the manual `docker compose` steps and use the
 > [CI/CD pipeline](#automatic-deploys-cicd) — after a one-time bootstrap, every push to `main`
@@ -46,10 +46,10 @@ is the #1 Lightsail gotcha.
 Create an **A record** for your domain → the **static IP** from step 2:
 
 ```
-spawnweaver.example.  A  <static-ip>
+spawnweaver.dev.  A  <static-ip>
 ```
 
-(Optionally also `www`.) Wait until `ping spawnweaver.example` resolves to the IP — Caddy needs
+(Optionally also `www`.) Wait until `ping spawnweaver.dev` resolves to the IP — Caddy needs
 working DNS to issue the certificate.
 
 ## 5. Install Docker
@@ -84,13 +84,13 @@ docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml up -d --
 Caddy will obtain a Let's Encrypt certificate within a few seconds. Verify:
 
 ```bash
-curl https://spawnweaver.example/health
+curl https://spawnweaver.dev/health
 # {"status":"ok","service":"Platform.Api","version":"…"}
 ```
 
-Open `https://spawnweaver.example/dashboard` to sign up. Players connect at
-`wss://spawnweaver.example/connect`, and developers install the SDK with
-`iwr https://spawnweaver.example/install.ps1 -UseBasicParsing | iex`.
+Open `https://spawnweaver.dev/dashboard` to sign up. Players connect at
+`wss://spawnweaver.dev/connect`, and developers install the SDK with
+`iwr https://spawnweaver.dev/install.ps1 -UseBasicParsing | iex`.
 
 ## Email (Resend)
 
@@ -101,7 +101,7 @@ provider:
 2. **Verify your sending domain** in Resend, then set in `deploy/.env`:
    ```
    EMAIL__RESEND__APIKEY=re_xxxxxxxx
-   EMAIL__FROMADDRESS=noreply@spawnweaver.example
+   EMAIL__FROMADDRESS=noreply@spawnweaver.dev
    ```
 3. Re-deploy: `docker compose --env-file deploy/.env -f deploy/docker-compose.prod.yml up -d`.
 

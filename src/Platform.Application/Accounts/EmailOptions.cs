@@ -13,14 +13,14 @@ public sealed class EmailOptions
     /// <summary>Resend API key. Supplied via environment/secret only — never committed.</summary>
     public string? ApiKey { get; set; }
 
-    /// <summary>The "From" address, e.g. "SpawnWeaver &lt;noreply@spawnweaver.example&gt;" or a bare address.</summary>
+    /// <summary>The "From" address, e.g. "SpawnWeaver &lt;noreply@spawnweaver.dev&gt;" or a bare address.</summary>
     public string FromAddress { get; set; } = "onboarding@resend.dev";
 
     /// <summary>Display name used when <see cref="FromAddress"/> is a bare address.</summary>
     public string FromName { get; set; } = "SpawnWeaver";
 
     /// <summary>
-    /// Absolute public base URL (e.g. https://spawnweaver.example) used to build links in emails.
+    /// Absolute public base URL (e.g. https://spawnweaver.dev) used to build links in emails.
     /// When empty, links fall back to the incoming request's scheme + host.
     /// </summary>
     public string? PublicBaseUrl { get; set; }

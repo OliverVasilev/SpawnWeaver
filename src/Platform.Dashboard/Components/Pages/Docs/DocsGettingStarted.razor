@@ -12,8 +12,8 @@
     <div class="banner banner-warn" style="margin-top:14px">
         <span>🌐</span>
         <span>
-            Examples below use <code>spawnweaver.example</code> as a placeholder — swap in
-            <strong>your</strong> domain. Don't have a server yet?
+            Examples below use <code>spawnweaver.dev</code> — the hosted server. Self-hosting?
+            Swap in <strong>your</strong> domain. Don't have a server yet?
             <a href="/dashboard/docs/hosting">Host it on AWS Lightsail in ~15 minutes →</a>
             Running it on your own machine instead? Use <code>http://localhost:5159</code> and
             <code>ws://127.0.0.1:5159/connect</code>.
@@ -47,10 +47,10 @@
         downloads just the addon into <code>res://addons/multiplayer_service</code> — no repo clone:
     </p>
     <pre># Windows (PowerShell)
-iwr https://spawnweaver.example/install.ps1 -UseBasicParsing | iex
+iwr https://spawnweaver.dev/install.ps1 -UseBasicParsing | iex
 
 # macOS / Linux
-curl -fsSL https://spawnweaver.example/install.sh | bash</pre>
+curl -fsSL https://spawnweaver.dev/install.sh | bash</pre>
     <p>
         Then open your project in Godot and enable <strong>SpawnWeaver Multiplayer Service</strong> in
         <em>Project → Project Settings → Plugins</em>. That registers the <code>MultiplayerService</code>
@@ -68,7 +68,7 @@ curl -fsSL https://spawnweaver.example/install.sh | bash</pre>
     </p>
     <ul>
         <li><strong>Public key:</strong> <code>pk_…</code> (from step 2)</li>
-        <li><strong>Server URL:</strong> <code>wss://spawnweaver.example/connect</code> (note <code>wss://</code> — secure — for a hosted domain)</li>
+        <li><strong>Server URL:</strong> <code>wss://spawnweaver.dev/connect</code> (note <code>wss://</code> — secure — for a hosted domain)</li>
     </ul>
     <p>
         Now your scenes can connect with no hard-coded keys using

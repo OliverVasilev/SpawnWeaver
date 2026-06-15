@@ -20,15 +20,15 @@ clone needed:
 
 ```powershell
 # Windows / PowerShell
-iwr https://spawnweaver.example/install.ps1 -UseBasicParsing | iex
+iwr https://spawnweaver.dev/install.ps1 -UseBasicParsing | iex
 ```
 
 ```bash
 # macOS / Linux (needs curl + unzip)
-curl -fsSL https://spawnweaver.example/install.sh | bash
+curl -fsSL https://spawnweaver.dev/install.sh | bash
 ```
 
-Replace `spawnweaver.example` with your server's address (e.g. `http://localhost:5159` when
+Replace `spawnweaver.dev` with your server's address (e.g. `http://localhost:5159` when
 running locally). Then enable **SpawnWeaver Multiplayer Service** in
 *Project → Project Settings → Plugins*.
 
