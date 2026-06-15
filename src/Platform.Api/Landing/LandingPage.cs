@@ -56,14 +56,14 @@ internal static class LandingPage
 <body>
     <div class="landing">
         <div class="topbar">
-            <a class="logo" href="/"><img src="/logo.png" alt="SpawnWeaver" /></a>
+            <a class="logo" href="/"><img class="logo-mark" src="/icon.png" alt="" /><span class="brand-gradient">SpawnWeaver</span></a>
             <div class="nav-account">
                 {{NAV_RIGHT}}
             </div>
         </div>
 
         <div class="hero">
-            <img class="hero-logo" src="/logo.png" alt="SpawnWeaver" />
+            <img class="hero-logo" src="/icon.png" alt="SpawnWeaver" />
             <span class="pill">GODOT MULTIPLAYER</span>
             <h1>Online multiplayer for Godot, <span class="brand-gradient">without the backend</span>.</h1>
             <p class="sub">

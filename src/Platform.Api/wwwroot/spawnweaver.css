@@ -181,13 +181,13 @@ tbody tr:hover { background: rgba(74, 158, 255, 0.07); }
     padding-bottom: 16px; margin-bottom: 26px;
     border-bottom: 2px solid var(--border);
 }
-.topbar .logo { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-pixel); font-size: 16px; color: var(--white); }
+.topbar .logo { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-pixel); font-size: 16px; color: var(--white); }
 .topbar a.logo:hover { color: var(--white); }
-.topbar .logo img { height: 36px; width: 36px; display: block; border-radius: 6px; }
+.topbar .logo .logo-mark { height: 30px; width: 30px; display: block; image-rendering: auto; }
 .topbar .logo .dim { color: var(--dim); font-size: 11px; }
 
-/* Landing hero logo */
-.hero-logo { display: block; width: 132px; height: 132px; border-radius: 14px; margin: 0 0 22px; box-shadow: var(--shadow); }
+/* Landing hero emblem (transparent PNG — no background box) */
+.hero-logo { display: block; width: 124px; height: 124px; margin: -6px 0 20px; filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.35)); }
 .nav { display: flex; gap: 6px; flex-wrap: wrap; }
 .nav a {
     font-family: var(--font-pixel); font-size: 11.5px;
@@ -196,6 +196,20 @@ tbody tr:hover { background: rgba(74, 158, 255, 0.07); }
 }
 .nav a:hover { color: var(--white); background: rgba(74, 158, 255, 0.08); }
 .nav a.active { color: var(--blue); background: rgba(74, 158, 255, 0.12); border-color: var(--border-strong); }
+
+/* Nav dropdown (Debugger menu) */
+.nav-dropdown { position: relative; }
+.nav-menu {
+    position: absolute; top: calc(100% + 4px); left: 0; display: none; z-index: 60;
+    min-width: 172px; padding: 6px; background: var(--bg-card);
+    border: 2px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow-sm);
+}
+.nav-dropdown:hover .nav-menu, .nav-dropdown:focus-within .nav-menu { display: block; }
+.nav-menu a {
+    display: block; font-family: var(--font-pixel); font-size: 11px;
+    padding: 8px 10px; border-radius: 4px; color: var(--steel); border: 2px solid transparent;
+}
+.nav-menu a:hover { color: var(--white); background: rgba(74, 158, 255, 0.10); }
 
 .page-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
 .page-head h2 { margin: 0; font-size: 20px; }

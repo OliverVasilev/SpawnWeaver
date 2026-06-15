@@ -5,13 +5,23 @@
 <div class="app-shell">
     <div class="topbar">
         <a class="logo" href="/">
-            <img src="/logo.png" alt="SpawnWeaver" /> <span class="dim">dashboard</span>
+            <img class="logo-mark" src="/icon.png" alt="" /><span class="brand-gradient">SpawnWeaver</span> <span class="dim">dashboard</span>
         </a>
         <nav class="nav">
             @if (User.IsAuthenticated)
             {
                 <a href="/dashboard" class="@ActiveClass("/dashboard")">Home</a>
                 <a href="/dashboard/projects" class="@ActiveClass("/dashboard/projects")">Projects</a>
+                <div class="nav-dropdown">
+                    <a href="/dashboard/debugger" class="@(DebuggerActive ? "active" : "")">Debugger ▾</a>
+                    <div class="nav-menu">
+                        <a href="/dashboard/realtime">Live activity</a>
+                        <a href="/dashboard/sessions">Sessions</a>
+                        <a href="/dashboard/errors">Errors</a>
+                        <a href="/dashboard/logs">Logs</a>
+                        <a href="/dashboard/debug">Debug bundle</a>
+                    </div>
+                </div>
                 <a href="/dashboard/docs" class="@(DocsActive ? "active" : "")">Docs</a>
             }
             else
@@ -38,7 +48,17 @@
 </div>
 
 @code {
+    private static readonly string[] DebuggerPaths =
+    {
+        "/dashboard/debugger", "/dashboard/realtime", "/dashboard/sessions",
+        "/dashboard/errors", "/dashboard/debug", "/dashboard/logs",
+    };
+
     private string CurrentPath => new Uri(Nav.Uri).AbsolutePath.TrimEnd('/');
+
+    private bool DebuggerActive =>
+        DebuggerPaths.Any(p => CurrentPath.Equals(p, StringComparison.OrdinalIgnoreCase)
+            || CurrentPath.StartsWith(p + "/", StringComparison.OrdinalIgnoreCase));
 
     private bool DocsActive =>
         CurrentPath.Equals("/dashboard/docs", StringComparison.OrdinalIgnoreCase)
