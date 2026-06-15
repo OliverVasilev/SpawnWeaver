@@ -1,7 +1,12 @@
 @page "/dashboard/projects/{ProjectId}"
 @using Platform.Application.Projects
+@using Platform.Application.Storage
+@using Platform.Realtime.Diagnostics
+@using Microsoft.Extensions.Options
 @inject ProjectService ProjectSvc
 @inject DashboardUser User
+@inject IOptions<StorageOptions> StorageOpts
+@inject RealtimeDiagnostics Diagnostics
 
 <div class="page-head">
     <h2>@(_project?.Name ?? "Project")</h2>
@@ -71,6 +76,28 @@ else
     </div>
 
     <div class="card">
+        <div class="section-title" style="margin-top:0">Plan &amp; limits</div>
+        <div class="stat-grid" style="margin-bottom:14px">
+            <div class="card stat">
+                <div class="value cyan">@_activeConnections</div>
+                <div class="label">Connections now</div>
+            </div>
+            <div class="card stat">
+                <div class="value violet">@_activeRooms</div>
+                <div class="label">Active rooms</div>
+            </div>
+        </div>
+        <div class="kv"><div class="kv-label">Plan</div><div><span class="badge badge-cyan">Free (alpha)</span></div></div>
+        <div class="kv"><div class="kv-label">Storage value size</div><div>@FormatBytes(_storage.MaxValueBytes) per key</div></div>
+        <div class="kv"><div class="kv-label">Storage keys</div><div>@_storage.MaxKeysPerPlayer per player</div></div>
+        <div class="kv"><div class="kv-label">Storage key length</div><div>@_storage.MaxKeyLength chars</div></div>
+        <p class="muted" style="margin:8px 0 0">
+            These are the limits the API enforces. See <a href="/dashboard/docs/limits">Limits &amp; pricing</a>
+            for the full table and what happens when a limit is hit.
+        </p>
+    </div>
+
+    <div class="card">
         <div class="section-title" style="margin-top:0">Connect from Godot</div>
         <pre>MultiplayerService.configure("@_project.PublicKey")
 MultiplayerService.connect_to_server("wss://spawnweaver.dev/connect")</pre>
@@ -86,6 +113,9 @@ MultiplayerService.connect_to_server("wss://spawnweaver.dev/connect")</pre>
 
     private Platform.Domain.Projects.Project? _project;
     private string? _orgName;
+    private StorageOptions _storage = new();
+    private int _activeConnections;
+    private int _activeRooms;
 
     protected override async Task OnInitializedAsync()
     {
@@ -101,6 +131,12 @@ MultiplayerService.connect_to_server("wss://spawnweaver.dev/connect")</pre>
         {
             _project = project;
             _orgName = org.Name;
+            _storage = StorageOpts.Value;
+            _activeConnections = Diagnostics.GetConnections().Count(c => c.ProjectId == project.Id);
+            _activeRooms = Diagnostics.GetRooms().Count(r => r.ProjectId == project.Id);
         }
     }
+
+    private static string FormatBytes(long bytes) =>
+        bytes >= 1024 ? $"{bytes / 1024.0:0.#} KB" : $"{bytes} B";
 }

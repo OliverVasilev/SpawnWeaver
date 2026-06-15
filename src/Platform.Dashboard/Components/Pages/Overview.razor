@@ -11,6 +11,39 @@
     <span class="badge badge-green"><span class="dot dot-online"></span>online</span>
 </div>
 
+@if (!_allDone)
+{
+    <div class="card">
+        <div class="section-title" style="margin-top:0">Get set up (@_doneCount/3)</div>
+        <ul class="checklist">
+            <li class="@(true ? "done" : "")">
+                <span class="check">@(true ? "✓" : "○")</span>
+                <span>Create your account</span>
+            </li>
+            <li class="@(_hasProject ? "done" : "")">
+                <span class="check">@(_hasProject ? "✓" : "○")</span>
+                <span>
+                    Create your first project
+                    @if (!_hasProject)
+                    {
+                        <a href="/dashboard/onboarding" class="checklist-cta">Create a project →</a>
+                    }
+                </span>
+            </li>
+            <li class="@(_hasConnection ? "done" : "")">
+                <span class="check">@(_hasConnection ? "✓" : "○")</span>
+                <span>
+                    Connect a player from Godot
+                    @if (_hasProject && !_hasConnection)
+                    {
+                        <a href="/dashboard/getting-started" class="checklist-cta">Install the SDK &amp; connect →</a>
+                    }
+                </span>
+            </li>
+        </ul>
+    </div>
+}
+
 @if (_projects.Count == 0)
 {
     <div class="card welcome-card">
@@ -86,6 +119,10 @@ else
 @code {
     private IReadOnlyList<Platform.Domain.Projects.Project> _projects = [];
     private long _errors;
+    private bool _hasProject;
+    private bool _hasConnection;
+    private bool _allDone;
+    private int _doneCount;
 
     protected override async Task OnInitializedAsync()
     {
@@ -95,5 +132,12 @@ else
         _projects = org is not null
             ? await Projects.ListByOrganizationAsync(org.Id)
             : await Projects.ListAsync(100);
+
+        _hasProject = _projects.Count > 0;
+        // Best-effort "a player has connected": any active connection for one of these projects.
+        var ids = _projects.Select(p => p.Id).ToHashSet();
+        _hasConnection = _hasProject && Diagnostics.GetConnections().Any(c => ids.Contains(c.ProjectId));
+        _doneCount = 1 + (_hasProject ? 1 : 0) + (_hasConnection ? 1 : 0);
+        _allDone = _doneCount == 3;
     }
 }
