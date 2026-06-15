@@ -1,22 +1,16 @@
 # SpawnWeaver — Godot GDScript SDK
 
-A small Godot 4 client for the SpawnWeaver multiplayer backend. It wraps a WebSocket
-connection, speaks the [realtime protocol](../../docs/protocol.md), and surfaces
-connection/room/event activity as Godot **signals**.
-
-> Status: v0.3.0 (Milestones 20–24). Connecting, guest auth, rooms, lobbies, matchmaking,
-> game-event relay, and **state sync** are implemented. The SDK auto-reconnects, detects
-> heartbeat timeouts, exposes a **structured error model** (`sdk_error`), a **debug mode**, a
-> copyable **debug report**, and an **editor plugin** (configure, test, and generate scenes
-> inside Godot). New here? Browse the full docs in your dashboard at **`/dashboard/docs`**.
+A small Godot 4 client for SpawnWeaver multiplayer. It connects, authenticates a guest player,
+and exposes rooms, lobbies, matchmaking, realtime events, and state sync as Godot **signals** —
+with auto-reconnect and clear errors built in. Full docs:
+**[spawnweaver.dev/dashboard/docs](https://spawnweaver.dev/dashboard/docs)**.
 
 ## Install
 
 ### One-line install (recommended)
 
-From the **root of your Godot project**, run the installer hosted by your SpawnWeaver server.
-It downloads just the addon and extracts it into `res://addons/multiplayer_service` — no repo
-clone needed:
+From the **root of your Godot project**, run the one-line installer. It downloads just the addon
+into `res://addons/multiplayer_service` — no repo clone needed:
 
 ```powershell
 # Windows / PowerShell

@@ -12,7 +12,6 @@
             {
                 <a href="/dashboard" class="@ActiveClass("/dashboard")">Home</a>
                 <a href="/dashboard/projects" class="@ActiveClass("/dashboard/projects")">Projects</a>
-                <a href="/dashboard/debugger" class="@(DebuggerActive ? "active" : "")">Debugger</a>
                 <a href="/dashboard/docs" class="@(DocsActive ? "active" : "")">Docs</a>
             }
             else
@@ -39,17 +38,7 @@
 </div>
 
 @code {
-    private static readonly string[] DebuggerPaths =
-    {
-        "/dashboard/debugger", "/dashboard/realtime", "/dashboard/sessions",
-        "/dashboard/errors", "/dashboard/debug", "/dashboard/logs",
-    };
-
     private string CurrentPath => new Uri(Nav.Uri).AbsolutePath.TrimEnd('/');
-
-    private bool DebuggerActive =>
-        DebuggerPaths.Any(p => CurrentPath.Equals(p, StringComparison.OrdinalIgnoreCase)
-            || CurrentPath.StartsWith(p + "/", StringComparison.OrdinalIgnoreCase));
 
     private bool DocsActive =>
         CurrentPath.Equals("/dashboard/docs", StringComparison.OrdinalIgnoreCase)

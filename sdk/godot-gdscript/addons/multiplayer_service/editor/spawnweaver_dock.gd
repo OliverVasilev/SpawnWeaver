@@ -58,24 +58,32 @@ func _build_ui() -> void:
 
 	_heading(root, "SpawnWeaver")
 
-	# Configuration.
+	# Configuration — the only thing you normally need is your project's public key.
 	_heading(root, "Configuration")
-	root.add_child(_labeled("Public key (pk_…)"))
+	root.add_child(_labeled("Public key — paste it from your project page"))
 	_key_edit = LineEdit.new(); _key_edit.placeholder_text = "pk_…"
 	root.add_child(_key_edit)
-	root.add_child(_labeled("Server URL"))
+	var save := Button.new(); save.text = "Save"
+	save.pressed.connect(_on_save)
+	root.add_child(save)
+
+	# Advanced (optional) — hidden by default; the defaults already point at SpawnWeaver.
+	var adv_toggle := CheckBox.new(); adv_toggle.text = "Advanced (optional)"
+	root.add_child(adv_toggle)
+	var adv := VBoxContainer.new(); adv.visible = false
+	adv.add_theme_constant_override("separation", 6)
+	adv_toggle.toggled.connect(func(on: bool): adv.visible = on)
+	root.add_child(adv)
+	adv.add_child(_labeled("Server URL"))
 	_url_edit = LineEdit.new(); _url_edit.text = "wss://spawnweaver.dev/connect"
-	root.add_child(_url_edit)
-	root.add_child(_labeled("Environment"))
+	adv.add_child(_url_edit)
+	adv.add_child(_labeled("Environment"))
 	_env_option = OptionButton.new()
 	_env_option.add_item("Development")
 	_env_option.add_item("Production")
-	root.add_child(_env_option)
+	adv.add_child(_env_option)
 	_debug_check = CheckBox.new(); _debug_check.text = "Enable SDK debug logging"
-	root.add_child(_debug_check)
-	var save := Button.new(); save.text = "Save credentials"
-	save.pressed.connect(_on_save)
-	root.add_child(save)
+	adv.add_child(_debug_check)
 
 	# Test.
 	_heading(root, "Test")

@@ -62,12 +62,12 @@ internal static class LandingPage
         </div>
 
         <div class="hero">
-            <span class="pill">GODOT MULTIPLAYER · ALPHA</span>
+            <span class="pill">GODOT MULTIPLAYER</span>
             <h1>Online multiplayer for Godot, <span class="brand-gradient">without the backend</span>.</h1>
             <p class="sub">
-                SpawnWeaver is a hosted multiplayer backend for Godot games. Drop in a native SDK,
-                point it at your server, and add rooms, lobbies, matchmaking, realtime events, and
-                player saves with a few lines of GDScript — no servers to write.
+                SpawnWeaver is a hosted multiplayer backend for Godot games. Drop in a native SDK and
+                add rooms, lobbies, matchmaking, realtime events, and player saves with a few lines of
+                GDScript — no servers to write, nothing to host.
             </p>
             <div class="cta-row">
                 {{HERO_CTAS}}
@@ -78,18 +78,18 @@ internal static class LandingPage
         <div class="card" style="margin-top:36px">
             <h2 style="margin-top:0">How it works</h2>
             <ol class="steps">
-                <li><strong>Sign in &amp; create a project.</strong> Name it to get a
-                    public key (safe to ship in your game) and a secret key (server-side, shown once).</li>
+                <li><strong>Sign in &amp; create a project.</strong> Name it and you instantly get
+                    your game's key.</li>
                 <li><strong>Install the Godot SDK in one line.</strong> Run the installer from your
                     project root — it drops the addon into <code>res://addons</code>. Then enable the plugin.</li>
-                <li><strong>Connect &amp; play.</strong> Paste your key + server URL into the editor dock,
+                <li><strong>Connect &amp; play.</strong> Paste your key into the editor dock,
                     write a few lines of GDScript, and run two instances to see two players together.</li>
             </ol>
             <pre># 1. install (from your Godot project folder)
-iwr https://your-domain/install.ps1 -UseBasicParsing | iex
+iwr https://spawnweaver.dev/install.ps1 -UseBasicParsing | iex
 
 # 2. connect in GDScript
-MultiplayerService.connect_using_config()      # uses your saved key + URL
+MultiplayerService.connect_using_config()      # uses your saved key
 MultiplayerService.create_room("Alice")        # share the room code
 MultiplayerService.send_event("player_moved", { "x": 10, "y": 5 })</pre>
             <div class="cta-row" style="margin-top:18px">
@@ -107,32 +107,6 @@ MultiplayerService.send_event("player_moved", { "x": 10, "y": 5 })</pre>
                 <div class="tut"><div class="tut-title">📨 Realtime events</div><p class="muted">Relay game events to everyone in a room with a single call.</p></div>
                 <div class="tut"><div class="tut-title">🔄 State sync</div><p class="muted">Shared room state and per-player entities, with snapshots for late joiners.</p></div>
                 <div class="tut"><div class="tut-title">💾 Player saves</div><p class="muted">Store profiles, progression, and inventory with project-scoped key-value storage.</p></div>
-                <div class="tut"><div class="tut-title">🔍 Multiplayer debugger</div><p class="muted">Session timelines, an error explorer with suggested fixes, and a debug-report viewer.</p></div>
-                <div class="tut"><div class="tut-title">🚀 Host it yourself</div><p class="muted">One Docker Compose stack on a small VPS — automatic HTTPS, your own domain.</p></div>
-            </div>
-        </div>
-
-        <div class="card" style="margin-top:18px">
-            <h2 style="margin-top:0">Honest about fit</h2>
-            <div class="fit-grid">
-                <div>
-                    <div class="fit-head fit-good">Great for</div>
-                    <ul class="fit-list">
-                        <li>Indie &amp; small-team games</li>
-                        <li>Lobbies, matchmaking, party games</li>
-                        <li>Casual co-op &amp; turn-based</li>
-                        <li>Lightweight realtime games</li>
-                    </ul>
-                </div>
-                <div>
-                    <div class="fit-head fit-bad">Not yet for</div>
-                    <ul class="fit-list">
-                        <li>Competitive shooters</li>
-                        <li>Full MMOs</li>
-                        <li>Server-authoritative physics</li>
-                        <li>Advanced anti-cheat</li>
-                    </ul>
-                </div>
             </div>
         </div>
 
@@ -148,7 +122,7 @@ MultiplayerService.send_event("player_moved", { "x": 10, "y": 5 })</pre>
         </div>
 
         <div class="card" style="margin-top:18px">
-            <h2 style="margin-top:0">Feedback <span class="badge badge-purple">alpha</span></h2>
+            <h2 style="margin-top:0">Feedback</h2>
             <p style="margin-top:4px">Found a bug or have a request? Tell us.</p>
             <input id="fb-email" class="field" type="email" placeholder="Email (optional)" />
             <textarea id="fb-message" class="field" rows="4" placeholder="Your feedback"></textarea>
@@ -158,7 +132,7 @@ MultiplayerService.send_event("player_moved", { "x": 10, "y": 5 })</pre>
             </div>
         </div>
 
-        <div class="footer">SpawnWeaver · multiplayer backend-as-a-service for Godot · alpha</div>
+        <div class="footer">SpawnWeaver · multiplayer backend-as-a-service for Godot</div>
     </div>
 
     <script>
