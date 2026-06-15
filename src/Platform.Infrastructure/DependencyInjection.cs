@@ -150,15 +150,16 @@ public static class DependencyInjection
     }
 
     /// <summary>
-    /// Prepares the database at startup: applies migrations for SQLite, or creates the
-    /// schema from the model for other providers (e.g. PostgreSQL test mode).
+    /// Prepares the database at startup. PostgreSQL (production) applies versioned EF
+    /// migrations so schema changes ship safely; the disposable local-dev SQLite database is
+    /// created directly from the model (no migration history needed).
     /// </summary>
     public static void InitializePlatformDatabase(this IServiceProvider services)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PlatformDbContext>();
 
-        if (db.Database.IsSqlite())
+        if (db.Database.IsNpgsql())
         {
             db.Database.Migrate();
         }

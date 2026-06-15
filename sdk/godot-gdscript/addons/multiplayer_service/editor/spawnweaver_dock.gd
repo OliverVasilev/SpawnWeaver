@@ -8,6 +8,7 @@ const TEMPLATE_DIR := "res://addons/multiplayer_service/templates"
 
 # label -> { template, root, name }
 const TEMPLATES := {
+	"Starter Game (recommended)": {"file": "starter_game.gd", "root": "Node2D", "name": "StarterGame"},
 	"Room Chat": {"file": "room_chat.gd", "root": "Control", "name": "RoomChat"},
 	"Lobby": {"file": "lobby.gd", "root": "Control", "name": "Lobby"},
 	"Matchmaking": {"file": "matchmaking.gd", "root": "Control", "name": "Matchmaking"},
