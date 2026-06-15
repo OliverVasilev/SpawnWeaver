@@ -181,9 +181,13 @@ tbody tr:hover { background: rgba(74, 158, 255, 0.07); }
     padding-bottom: 16px; margin-bottom: 26px;
     border-bottom: 2px solid var(--border);
 }
-.topbar .logo { font-family: var(--font-pixel); font-size: 16px; color: var(--white); }
+.topbar .logo { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-pixel); font-size: 16px; color: var(--white); }
 .topbar a.logo:hover { color: var(--white); }
+.topbar .logo img { height: 36px; width: 36px; display: block; border-radius: 6px; }
 .topbar .logo .dim { color: var(--dim); font-size: 11px; }
+
+/* Landing hero logo */
+.hero-logo { display: block; width: 132px; height: 132px; border-radius: 14px; margin: 0 0 22px; box-shadow: var(--shadow); }
 .nav { display: flex; gap: 6px; flex-wrap: wrap; }
 .nav a {
     font-family: var(--font-pixel); font-size: 11.5px;

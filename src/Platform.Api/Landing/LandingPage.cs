@@ -47,6 +47,7 @@ internal static class LandingPage
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SpawnWeaver — Multiplayer for Godot</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet" />
@@ -55,13 +56,14 @@ internal static class LandingPage
 <body>
     <div class="landing">
         <div class="topbar">
-            <a class="logo" href="/"><span class="brand-gradient">SpawnWeaver</span></a>
+            <a class="logo" href="/"><img src="/logo.png" alt="SpawnWeaver" /></a>
             <div class="nav-account">
                 {{NAV_RIGHT}}
             </div>
         </div>
 
         <div class="hero">
+            <img class="hero-logo" src="/logo.png" alt="SpawnWeaver" />
             <span class="pill">GODOT MULTIPLAYER</span>
             <h1>Online multiplayer for Godot, <span class="brand-gradient">without the backend</span>.</h1>
             <p class="sub">
