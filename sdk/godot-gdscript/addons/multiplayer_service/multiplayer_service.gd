@@ -80,15 +80,35 @@ signal sdk_error(error: Dictionary)
 
 enum State { DISCONNECTED, CONNECTING, CONNECTED }
 
+## Base URL for the docs linked from error messages.
+const DOCS_BASE_URL := "https://spawnweaver.dev/dashboard/docs"
+
 ## Human-friendly descriptions for the error codes carried by `error_received` / `sdk_error`.
 const ERROR_DESCRIPTIONS := {
-	"malformed_message": "The message sent to the server was not valid.",
-	"unknown_message_type": "The server did not recognize that message type.",
+	"malformed_message": "The message sent to the server was not valid JSON.",
+	"unknown_message_type": "The server did not recognize that message type — check your SDK version.",
 	"invalid_payload": "A required field was missing or invalid.",
-	"room_not_found": "That room or lobby does not exist — check the code.",
+	"room_not_found": "That room or lobby does not exist — check the code (it may have expired).",
 	"room_full": "That room or lobby is full.",
-	"payload_too_large": "The message was too large.",
+	"payload_too_large": "The message was too large (raise it under your plan limits, or send less).",
 	"rate_limited": "You are sending messages too quickly; slow down.",
+	# State sync (Milestone 23)
+	"state_forbidden": "You can only change state you own (or room state as the host).",
+	"entity_not_found": "That entity no longer exists.",
+	"state_limit_exceeded": "Too many entities in this room — delete some or reuse ids.",
+	"state_too_large": "The resulting state is over the size limit; store less per entity.",
+}
+
+## Per-code documentation anchors, appended to DOCS_BASE_URL in the structured error's `docs_url`.
+const ERROR_DOCS := {
+	"rate_limited": "/limits",
+	"payload_too_large": "/limits",
+	"state_forbidden": "/tutorial-state-sync",
+	"entity_not_found": "/tutorial-state-sync",
+	"state_limit_exceeded": "/tutorial-state-sync",
+	"state_too_large": "/tutorial-state-sync",
+	"room_not_found": "/tutorial-online",
+	"room_full": "/tutorial-lobby",
 }
 
 ## Error codes the caller can safely retry (after a short delay). Everything else is fatal
@@ -629,12 +649,18 @@ func _on_protocol_error(payload: Dictionary) -> void:
 	if _recent_errors.size() > _MAX_RECENT_ERRORS:
 		_recent_errors.pop_front()
 
-	_log("error", "%s: %s%s" % [code, error["message"], " (retryable)" if error["retryable"] else ""])
+	var docs := str(error.get("docs_url", ""))
+	var detail := "%s%s" % [error["message"], "  Docs: " + docs if docs != "" else ""]
+	_log("error", "%s: %s%s" % [code, detail, " (retryable)" if error["retryable"] else ""])
+	# Surface fatal errors to the Godot console even when debug logging is off, so the dev
+	# sees an actionable message + doc link instead of a silent dropped request.
+	if not error["retryable"]:
+		push_error("SpawnWeaver [%s]: %s" % [code, detail])
 	error_received.emit(code, message)
 	sdk_error.emit(error)
 
 
-## Builds the structured error shape { code, message, details, retryable }.
+## Builds the structured error shape { code, message, details, retryable, docs_url }.
 func _make_error(code: String, message: String, details = {}) -> Dictionary:
 	var resolved_details: Dictionary = details if typeof(details) == TYPE_DICTIONARY else {}
 	return {
@@ -642,7 +668,13 @@ func _make_error(code: String, message: String, details = {}) -> Dictionary:
 		"message": message if message != "" else describe_error(code),
 		"details": resolved_details,
 		"retryable": bool(RETRYABLE_ERRORS.get(code, false)),
+		"docs_url": docs_url_for(code),
 	}
+
+
+## Returns a docs URL that explains an error code, or "" if there's no specific page.
+func docs_url_for(code: String) -> String:
+	return DOCS_BASE_URL + str(ERROR_DOCS[code]) if ERROR_DOCS.has(code) else ""
 
 
 func _maybe_rejoin() -> void:

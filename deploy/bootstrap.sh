@@ -45,18 +45,26 @@ mkdir -p "$APP_DIR/deploy"
 
 ENV_FILE="$APP_DIR/deploy/.env"
 if [ ! -f "$ENV_FILE" ]; then
-  cat > "$ENV_FILE" <<'ENV'
-# SpawnWeaver production secrets — EDIT THESE before your first deploy.
+  # Generate strong, STABLE secrets once so they survive every future deploy.
+  gen() { openssl rand -base64 "${1:-48}" 2>/dev/null | tr -d '\n' || head -c "${1:-48}" /dev/urandom | base64 | tr -d '\n'; }
+  TOKEN_SECRET="$(gen 48)"
+  ADMIN_KEY="$(gen 32)"
+  cat > "$ENV_FILE" <<ENV
+# SpawnWeaver production secrets — EDIT the marked values before your first deploy.
 DOMAIN=spawnweaver.dev
 ACME_EMAIL=you@spawnweaver.dev
 POSTGRES_PASSWORD=change-me-to-a-long-random-string
+# Auto-generated stable secrets (DO NOT change after launch — rotating them logs everyone out):
+AUTH__TOKENSECRET=${TOKEN_SECRET}
+ADMIN__APIKEY=${ADMIN_KEY}
+SECURITY__ALLOWEDORIGINS=
 # Resend (leave the key blank to disable real email — accounts then auto-verify):
 EMAIL__RESEND__APIKEY=
 EMAIL__FROMADDRESS=onboarding@resend.dev
 EMAIL__FROMNAME=SpawnWeaver
 ENV
   chmod 600 "$ENV_FILE"
-  echo "    Wrote $ENV_FILE — EDIT IT (DOMAIN, ACME_EMAIL, POSTGRES_PASSWORD, Resend)."
+  echo "    Wrote $ENV_FILE (token + admin secrets auto-generated) — EDIT DOMAIN, ACME_EMAIL, POSTGRES_PASSWORD, Resend."
 else
   echo "    $ENV_FILE already exists — leaving it untouched."
 fi

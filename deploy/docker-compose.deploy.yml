@@ -40,6 +40,14 @@ services:
       Database__Provider: postgres
       ConnectionStrings__Default: "Host=db;Port=5432;Database=spawnweaver;Username=spawnweaver;Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}"
       App__PublicBaseUrl: "https://${DOMAIN}"
+      # Stable HMAC secret for player tokens — REQUIRED so reconnect tokens survive deploys
+      # (unset ⇒ a random secret per process ⇒ every deploy logs out all players).
+      Auth__TokenSecret: ${AUTH__TOKENSECRET:?set AUTH__TOKENSECRET in deploy/.env}
+      # Admin API guard: when set, /api/admin/* requires Authorization: Bearer <key>.
+      Admin__ApiKey: ${ADMIN__APIKEY:-}
+      # Optional Origin allowlist for the dashboard/control plane (comma-separated). Leave empty
+      # to allow any origin — native game clients send no Origin, so don't restrict /connect here.
+      Security__AllowedOrigins: ${SECURITY__ALLOWEDORIGINS:-}
       Email__Provider: resend
       Email__Resend__ApiKey: ${EMAIL__RESEND__APIKEY:-}
       Email__FromAddress: ${EMAIL__FROMADDRESS:-onboarding@resend.dev}

@@ -146,7 +146,16 @@ func _link_button(parent: Node, text: String, path: String) -> void:
 
 # --- Config ---
 
+## A public key looks like "pk_…"; the secret key (sk_…) must never ship in a client.
+func _valid_public_key(key: String) -> bool:
+	return key.begins_with("pk_") and key.length() >= 8
+
+
 func _on_save() -> void:
+	var key := _key_edit.text.strip_edges()
+	if key != "" and not _valid_public_key(key):
+		_set_result("Won't save: a public key starts with 'pk_'. Don't paste the secret (sk_…) key here.")
+		return
 	var cfg := ConfigFile.new()
 	cfg.set_value("project", "public_key", _key_edit.text.strip_edges())
 	cfg.set_value("project", "server_url", _url_edit.text.strip_edges())
@@ -174,6 +183,10 @@ func _on_test_connection() -> void:
 	var url := _url_edit.text.strip_edges()
 	if key == "" or url == "":
 		_set_result("Enter a public key and server URL first.")
+		return
+	if not _valid_public_key(key):
+		_set_result("That doesn't look like a public key — it should start with 'pk_'. The "
+			+ "secret key (sk_…) must stay server-side, never in the game client.")
 		return
 
 	_stop_test()
