@@ -24,7 +24,7 @@ dots around an arena — positions are relayed in real time. **End Match** retur
 
 ## Godot setup
 
-1. Open `sdk/godot-gdscript` in Godot 4.3+.
+1. Open `sdk/godot-gdscript` in Godot 4.2+.
 2. Run `examples/matchmaking_arena/matchmaking_arena.tscn`.
 
 ## Run two clients locally

@@ -27,7 +27,7 @@ gets caught up because each ready player re-announces when someone new joins.
 
 ## Godot setup
 
-1. Open `sdk/godot-gdscript` in Godot 4.3+.
+1. Open `sdk/godot-gdscript` in Godot 4.2+.
 2. Run `examples/lobby_ready/lobby_ready.tscn`.
 
 ## Run two clients locally

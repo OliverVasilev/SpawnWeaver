@@ -281,7 +281,7 @@ project, and writes this folder's `spawnweaver.cfg` for you (no key copy/paste):
 ./quickstart.ps1      # Windows;  ./quickstart.sh on macOS/Linux
 ```
 
-Then open this folder (`sdk/godot-gdscript`) in Godot 4.3+, *Debug → Run Multiple Instances
+Then open this folder (`sdk/godot-gdscript`) in Godot 4.2+, *Debug → Run Multiple Instances
 → 2 instances*, run, and click **Connect** in both windows.
 
 Or do it manually:
@@ -289,7 +289,7 @@ Or do it manually:
 1. Start the backend (e.g. `dotnet run --project src/Platform.Api`) and note the port.
 2. Sign up and create a project (`POST /api/auth/signup` then `POST /api/projects`) → copy
    the `publicKey` (`pk_...`). Project creation requires a signed-in account.
-3. Open this folder (`sdk/godot-gdscript`) in Godot 4.3+.
+3. Open this folder (`sdk/godot-gdscript`) in Godot 4.2+.
 4. *Debug → Run Multiple Instances → 2 instances*, then run the project.
 5. In both windows: paste the project key, fix the URL/port, click **Connect**.
 6. Window A: **Create Room** → note the code. Window B: type the code → **Join Room**.

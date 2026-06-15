@@ -26,7 +26,7 @@ that everyone in the room sees — with a live list of connected players.
 
 ## Godot setup
 
-1. Open `sdk/godot-gdscript` in Godot 4.3+ (the `MultiplayerService` autoload is registered
+1. Open `sdk/godot-gdscript` in Godot 4.2+ (the `MultiplayerService` autoload is registered
    by the bundled addon).
 2. Run `examples/chat_room/chat_room.tscn`.
 

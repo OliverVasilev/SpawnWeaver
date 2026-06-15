@@ -165,9 +165,21 @@ func _on_generate() -> void:
 		_set_result("Could not write " + scene_path)
 		return
 
-	if Engine.is_editor_hint():
-		EditorInterface.get_resource_filesystem().scan()
+	_rescan_filesystem()
 	_set_result("Created %s — open it from the FileSystem dock and press Play." % scene_path)
+
+
+## Refreshes the editor FileSystem dock so the new files appear immediately. Version-safe:
+## resolved via the singleton name (no compile-time dependency on EditorInterface) and a no-op
+## outside the editor — the files are written either way, so generation never fails on this.
+func _rescan_filesystem() -> void:
+	if not Engine.is_editor_hint() or not Engine.has_singleton("EditorInterface"):
+		return
+	var editor: Object = Engine.get_singleton("EditorInterface")
+	if editor != null and editor.has_method("get_resource_filesystem"):
+		var fs = editor.get_resource_filesystem()
+		if fs != null:
+			fs.scan()
 
 
 func _write_file(path: String, contents: String) -> bool:

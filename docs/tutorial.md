@@ -68,7 +68,7 @@ That's it — two clients in the same room now see each other move in real time.
 
 ## Try the demo
 
-Open `sdk/godot-gdscript` in Godot 4.3+, set the main scene to
+Open `sdk/godot-gdscript` in Godot 4.2+, set the main scene to
 `examples/movement_demo.tscn`, run **two instances** (Debug → Run Multiple Instances),
 Connect in both, Create a room in one and Join with the code in the other, then move with
 the arrow keys.

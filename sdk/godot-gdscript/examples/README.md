@@ -5,7 +5,7 @@ Each one runs with **two local clients** (Godot's *Debug → Run Multiple Instan
 its own README with setup and troubleshooting.
 
 All examples live in this one Godot project (`sdk/godot-gdscript`) so they share the bundled
-`MultiplayerService` addon. Open the folder in Godot 4.3+, then run any scene below.
+`MultiplayerService` addon. Open the folder in Godot 4.2+, then run any scene below.
 
 | Example | Teaches | Backend features | Folder |
 |---|---|---|---|

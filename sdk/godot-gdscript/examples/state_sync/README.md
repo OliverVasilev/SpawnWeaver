@@ -26,7 +26,7 @@ controls a shared **round** counter via room state.
 
 ## Godot setup
 
-1. Open `sdk/godot-gdscript` in Godot 4.3+.
+1. Open `sdk/godot-gdscript` in Godot 4.2+.
 2. Run `examples/state_sync/state_sync.tscn`.
 
 ## Run two clients locally

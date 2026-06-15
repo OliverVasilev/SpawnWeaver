@@ -33,7 +33,7 @@ key into the Godot SDK config so the bundled examples connect with **no copy/pas
 ./quickstart.sh
 ```
 
-Then open `sdk/godot-gdscript` in **Godot 4.3+**, choose *Debug → Run Multiple Instances → 2
+Then open `sdk/godot-gdscript` in **Godot 4.2+**, choose *Debug → Run Multiple Instances → 2
 instances*, and press **Play** — both windows are pre-configured; just click **Connect**.
 
 The script is idempotent (re-running reuses the same account and project, so the public key
