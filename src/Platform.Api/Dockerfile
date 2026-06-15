@@ -11,6 +11,7 @@ COPY src/Platform.Domain/Platform.Domain.csproj            src/Platform.Domain/
 COPY src/Platform.Application/Platform.Application.csproj   src/Platform.Application/
 COPY src/Platform.Infrastructure/Platform.Infrastructure.csproj src/Platform.Infrastructure/
 COPY src/Platform.Realtime/Platform.Realtime.csproj        src/Platform.Realtime/
+COPY src/Platform.Dashboard/Platform.Dashboard.csproj      src/Platform.Dashboard/
 COPY src/Platform.Api/Platform.Api.csproj                  src/Platform.Api/
 RUN dotnet restore src/Platform.Api/Platform.Api.csproj
 
