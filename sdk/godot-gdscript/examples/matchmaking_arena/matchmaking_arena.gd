@@ -17,6 +17,7 @@ const DEFAULT_URL := "wss://spawnweaver.dev/connect"
 const GAME_MODE := "duel_1v1"
 const SPEED := 240.0
 const SEND_INTERVAL := 0.05            # 20 position updates/sec (under the rate limit)
+const SMOOTHING := 14.0                # how fast the opponent dot catches up to its latest position
 const SELF_COLOR := Color(0.20, 0.75, 1.0)
 const OPP_COLOR := Color(1.0, 0.55, 0.25)
 const ARENA := Rect2(40, 150, 720, 380)
@@ -31,6 +32,7 @@ var _end_btn: Button
 var _in_match := false
 var _self_pos := Vector2(400, 340)
 var _opp_pos := Vector2.ZERO
+var _opp_target := Vector2.ZERO
 var _opp_id := ""
 var _has_opponent := false
 var _send_accum := 0.0
@@ -63,6 +65,9 @@ func _process(delta: float) -> void:
 		if _send_accum >= SEND_INTERVAL and move != Vector2.ZERO:
 			_send_accum = 0.0
 			MultiplayerService.send_event("move", {"x": _self_pos.x, "y": _self_pos.y})
+		if _has_opponent:
+			# Smoothly follow the opponent's last reported position instead of snapping to it.
+			_opp_pos = _opp_pos.lerp(_opp_target, 1.0 - exp(-delta * SMOOTHING))
 	queue_redraw()
 
 
@@ -169,8 +174,10 @@ func _on_match_found(room_id: String, room_code: String, players: Array) -> void
 func _on_event_received(event: String, data: Dictionary, from_player_id: String) -> void:
 	if event == "move" and (from_player_id == _opp_id or _opp_id == ""):
 		_opp_id = from_player_id
+		_opp_target = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
+		if not _has_opponent:
+			_opp_pos = _opp_target      # first update: start here, don't slide in from the corner
 		_has_opponent = true
-		_opp_pos = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
 
 
 func _on_player_left(_room_id: String, player_id: String) -> void:

@@ -25,7 +25,9 @@ MultiplayerService.leave_matchmaking()</pre>
 
     <h2>4. Play</h2>
     <p>Once matched you're in a normal room — relay inputs with <code>send_event</code> or sync
-        positions with <a href="/dashboard/docs/tutorial-state-sync">entity state</a>.</p>
+        positions with <a href="/dashboard/docs/tutorial-state-sync">entity state</a>. Either way,
+        <strong>interpolate remote players</strong> so they glide instead of teleporting (or drop in a
+        <a href="/dashboard/docs/sync-nodes">SpawnSync</a> node, which does it for you).</p>
 
     <p>Full version: the <strong>1v1 Matchmaking Arena</strong> example in
         <code>sdk/godot-gdscript/examples/matchmaking_arena/</code>.</p>

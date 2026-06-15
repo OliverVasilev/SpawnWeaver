@@ -18,6 +18,7 @@ extends Node2D
 const DEFAULT_URL := "wss://spawnweaver.dev/connect"
 const SPEED := 220.0
 const SEND_INTERVAL := 0.06
+const SMOOTHING := 14.0          # how fast remote dots catch up to their latest position
 const ARENA := Rect2(40, 170, 720, 360)
 const MINE_COLOR := Color(0.20, 0.75, 1.0)
 const OTHER_COLOR := Color(1.0, 0.55, 0.25)
@@ -62,7 +63,19 @@ func _process(delta: float) -> void:
 			if _send_accum >= SEND_INTERVAL:
 				_send_accum = 0.0
 				MultiplayerService.patch_entity_state(_my_id, {"x": _my_pos.x, "y": _my_pos.y})
+		_interpolate_others(delta)
 	queue_redraw()
+
+
+## Slide each other player's dot toward its latest position so updates look continuous
+## instead of teleporting (state sync v1 sends discrete updates; you smooth on the client).
+func _interpolate_others(delta: float) -> void:
+	var t := 1.0 - exp(-delta * SMOOTHING)
+	for id in _entities:
+		if id == _my_id:
+			continue
+		var e: Dictionary = _entities[id]
+		e["render_pos"] = (e.get("render_pos", e["pos"]) as Vector2).lerp(e["pos"] as Vector2, t)
 
 
 func _draw() -> void:
@@ -70,10 +83,14 @@ func _draw() -> void:
 	draw_rect(ARENA, Color(0.2, 0.5, 0.8), false, 2.0)
 	if not _in_room:
 		return
+	# Other players: drawn at their smoothed position.
 	for id in _entities:
+		if id == _my_id:
+			continue
 		var e: Dictionary = _entities[id]
-		var color := MINE_COLOR if id == _my_id else OTHER_COLOR
-		draw_circle(e["pos"], 15.0, color)
+		draw_circle(e.get("render_pos", e["pos"]), 15.0, OTHER_COLOR)
+	# My own dot: drawn directly from my local position (instant, no round-trip).
+	draw_circle(_my_pos, 15.0, MINE_COLOR)
 
 
 # --- UI ---
@@ -176,16 +193,20 @@ func _on_snapshot(snapshot: Dictionary) -> void:
 	for e in snapshot.get("entities", []):
 		var id := str(e.get("entityId", ""))
 		var s: Dictionary = e.get("state", {})
-		_entities[id] = {"pos": Vector2(float(s.get("x", 0)), float(s.get("y", 0))), "owner": str(e.get("ownerId", ""))}
+		var pos := Vector2(float(s.get("x", 0)), float(s.get("y", 0)))
+		_entities[id] = {"pos": pos, "render_pos": pos, "owner": str(e.get("ownerId", ""))}
 	var room_state: Dictionary = snapshot.get("roomState", {})
 	if room_state.has("round"):
 		_set_round(int(room_state["round"]))
 
 
 func _on_entity_changed(entity_id: String, _patch: Dictionary, full: Dictionary) -> void:
+	var prev: Dictionary = _entities.get(entity_id, {})
+	var target := Vector2(float(full.get("x", 0)), float(full.get("y", 0)))
 	_entities[entity_id] = {
-		"pos": Vector2(float(full.get("x", 0)), float(full.get("y", 0))),
-		"owner": _entities.get(entity_id, {}).get("owner", entity_id)
+		"pos": target,                              # latest authoritative position
+		"render_pos": prev.get("render_pos", target),   # smoothed; init to target on first sight
+		"owner": prev.get("owner", entity_id),
 	}
 
 

@@ -33,12 +33,27 @@ MultiplayerService.room_state_changed.connect(func(_patch, state): set_round(sta
 MultiplayerService.delete_entity_state(my_id)
 MultiplayerService.entity_state_deleted.connect(func(id): remove_dot(id))</pre>
 
+    <h2>5. Smooth remote players</h2>
+    <p>State sync sends discrete updates a few times a second, so a remote dot would <em>teleport</em>
+        between them. Interpolate on the client: keep a <strong>target</strong> and a
+        <strong>render</strong> position per entity, and slide one toward the other each frame. Draw your
+        <em>own</em> dot from your local position so it stays instant (no round-trip).</p>
+    <pre>const SMOOTHING := 14.0   # higher = snappier, lower = smoother
+
+func _process(delta: float) -> void:
+    var t := 1.0 - exp(-delta * SMOOTHING)
+    for id in _remote_ids:
+        _render_pos[id] = _render_pos[id].lerp(_target_pos[id], t)   # draw at _render_pos</pre>
+    <p>Want it for free? The <a href="/dashboard/docs/sync-nodes">SpawnSync</a> drop-in node streams a
+        node's transform and interpolates remote copies automatically — no manual code. The
+        <a href="/dashboard/docs/tutorial-2d-shooter">2D shooter</a> uses it.</p>
+
     <h2>Rules &amp; limits</h2>
     <ul>
         <li>Only an entity's <strong>owner</strong> can update/delete it; only the <strong>host</strong>
             can patch room state. Violations arrive on <code>state_update_rejected</code>.</li>
         <li>Defaults: 50 entities/room, 4&nbsp;KB per entity, 16&nbsp;KB room state, 10 updates/sec/client.</li>
-        <li>v1 has no prediction or interpolation — interpolate on the client for smoothness.</li>
+        <li>v1 has no server-side prediction or interpolation — smooth it on the client (step 5) or use SpawnSync.</li>
     </ul>
 
     <p>Full version: the <strong>Simple State Sync Demo</strong> in
